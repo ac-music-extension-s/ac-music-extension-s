@@ -8,7 +8,7 @@
 
 'use strict';
 
-const loopTimes = {
+export const loopTimes = {
 	'animal-crossing': {
 		sunny: {
 			 0: { start:   '0.000', end: '125.628' },

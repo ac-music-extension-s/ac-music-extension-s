@@ -3,10 +3,13 @@
 /* global TownTuneManager, MediaSessionManager, TimeKeeper */
 /* global chrome, printDebug, checkMediaSessionSupport, KKSongList, capitalize, loopTimes, formatHour */
 
+import { MediaSessionManager } from './MediaSessionManager.js';
+import { TimeKeeper } from './TimeKeeper.js';
+import { notifyListeners } from './StateManager.js';
 
 'use strict';
 
-function AudioManager(addEventListener, isTownTune) {
+export function AudioManager(addEventListener, isTownTune) {
 
 	// if eventsEnabled is true, plays event music when appliccable.
 	// Only enable after all game's music-folders contain one .ogg sound file for each event
@@ -126,7 +129,7 @@ function AudioManager(addEventListener, isTownTune) {
 		};
 
 		if (!tabAudioPaused) { audio.currentTime = seekTime; audio.play().then(setLoopTimes).catch(audioPlayError); }
-		else window.notify("pause", [tabAudioPaused]); // Set the badge icon back to the paused state
+		else notifyListeners("pause", [tabAudioPaused]); // Set the badge icon back to the paused state
 
 		function setLoopTimes() {
 			// song has started
@@ -207,7 +210,7 @@ function AudioManager(addEventListener, isTownTune) {
 			audio.play();
 
 			let formattedTitle = `${song.split(' - ')[1]} (${capitalize(version)} Version)`;
-			window.notify("kkMusic", [formattedTitle]);
+			notifyListeners("kkMusic", [formattedTitle]);
 
 			mediaSessionManager.updateMetadataKK(formattedTitle, song);
 		});
@@ -251,7 +254,7 @@ function AudioManager(addEventListener, isTownTune) {
 	function onPause() {
 		if (hourlyChange) hourlyChange = false;
 		else {
-			window.notify("pause", [tabAudioPaused]);
+			notifyListeners("pause", [tabAudioPaused]);
 			if (killLoopTimeout) killLoopTimeout();
 			if (!tabAudioPaused) window.localStorage.setItem("paused", "true");
 		}
@@ -301,7 +304,7 @@ function AudioManager(addEventListener, isTownTune) {
 						if (!townTunePlaying) audio.play();
 						tabAudioPaused = false;
 						// Get the badge icon updated.
-						window.notify("unpause");
+						notifyListeners("unpause");
 					}
 				}
 			}
@@ -323,20 +326,20 @@ function AudioManager(addEventListener, isTownTune) {
 			if (audio.paused && tabAudio != 'pause') {
 				audio.play();
 				tabAudioPaused = false;
-				window.notify("unpause");
-				window.notify("tabAudio", [true, tabAudio, reduceValue]);
+				notifyListeners("unpause");
+				notifyListeners("tabAudio", [true, tabAudio, reduceValue]);
 			} else if (reducedVolume && tabAudio != 'reduce') {
 				reducedVolume = false;
 				setVolume();
-				window.notify("tabAudio", [true, tabAudio, reduceValue]);
-			} else if (tabAudio == 'pause' && audio.pause && !tabAudioPaused) window.notify("tabAudio", [true, tabAudio, reduceValue]);
-			else if (!reducedVolume && tabAudio == 'reduce') window.notify("tabAudio", [true, tabAudio, reduceValue]);
+				notifyListeners("tabAudio", [true, tabAudio, reduceValue]);
+			} else if (tabAudio == 'pause' && audio.pause && !tabAudioPaused) notifyListeners("tabAudio", [true, tabAudio, reduceValue]);
+			else if (!reducedVolume && tabAudio == 'reduce') notifyListeners("tabAudio", [true, tabAudio, reduceValue]);
 		}
 	});
 
 	audio.onerror = audioPlayError;
 
 	function audioPlayError() {
-		window.notify("musicFailed");
+		notifyListeners("musicFailed");
 	}
 }

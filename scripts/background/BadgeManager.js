@@ -2,7 +2,7 @@
 
 'use strict';
 
-function BadgeManager(addEventListener, isEnabledStart) {
+export function BadgeManager(addEventListener, isEnabledStart) {
 	let isEnabled = isEnabledStart;
 	let isTabAudible = false;
 	let badgeText;
@@ -16,42 +16,6 @@ function BadgeManager(addEventListener, isEnabledStart) {
 		if (enabled) updateBadgeText();
 		else updateBadgeText(true);
 	}
-
-	addEventListener("hourMusic", (hour, weather) => {
-		badgeText = `${formatHour(hour)}`;
-		if (!isTabAudible) {
-			if (isEnabled) updateBadgeText();
-			setIcon(weather);
-		}
-	});
-
-	addEventListener("kkStart", () => {
-		badgeText = "KK";
-		if (isEnabled) updateBadgeText();
-		setIcon('kk');
-	});
-
-	addEventListener("pause", tabPause => {
-		if (tabPause) {
-			isTabAudible = true;
-			setBadgeText("ll");
-		} else setBadgeText("");
-		setIcon('paused');
-	});
-
-	addEventListener("unpause", () => {
-		isTabAudible = false;
-		if (isEnabled) setBadgeText(badgeText);
-		if (badgeIcon) setIcon(badgeIcon);
-	});
-
-	addEventListener("musicFailed", () => {
-		setBadgeText("x", [230, 0, 0, 255]);
-	});
-
-	addEventListener("gameChange", (hour, weather) => setIcon(weather));
-
-	addEventListener("weatherChange", (hour, weather) => setIcon(weather));
 
 	chrome.browserAction.setBadgeBackgroundColor({ color: [57, 230, 0, 255] });
 
@@ -91,3 +55,49 @@ function BadgeManager(addEventListener, isEnabledStart) {
 		chrome.browserAction.setIcon({ path });
 	}
 }
+
+chrome.runtime.onMessage.addListener((type, target, args) => {
+	console.log(type, target, args)
+	if (target !== 'service-worker') return;
+
+	if (type == 'hourMusic') {
+		let hour = args[0]
+		let weather = args[1]
+		badgeText = `${formatHour(hour)}`;
+		if (!isTabAudible) {
+			if (isEnabled) updateBadgeText();
+			setIcon(weather);
+		}
+	}
+
+	if (type == 'kkStart') {
+		badgeText = "KK";
+		if (isEnabled) updateBadgeText();
+		setIcon('kk');
+	}
+
+	if (type == 'pause') {
+		let tabPause = args[0]
+		if (tabPause) {
+			isTabAudible = true;
+			setBadgeText("ll");
+		} else setBadgeText("");
+		setIcon('paused');
+	}
+
+	if (type == 'unpause') {
+		isTabAudible = false;
+		if (isEnabled) setBadgeText(badgeText);
+		if (badgeIcon) setIcon(badgeIcon);
+	}
+
+	if (type == 'musicFailed') {
+		setBadgeText("x", [230, 0, 0, 255]);
+	}
+
+	if (type == 'gameChange' || type == 'weatherChange') {
+		let hour = args[0]
+		let weather = args[1]
+		setIcon(weather)
+	}
+})

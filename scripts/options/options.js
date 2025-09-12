@@ -1,5 +1,8 @@
 'use strict';
 
+import { KKSongList } from '../background/KKSongs.js';
+import { DEBUG_FLAG, printDebug } from '../background/Utility.js';
+
 const onClickElements = [
 	'animal-crossing',
 	'wild-world',
@@ -216,8 +219,7 @@ function saveOptions() {
 		kkSelectedSongsEnable,
 		kkSelectedSongs
 	});
-	window.localStorage.setItem("volume", volume)
-	window.localStorage.setItem("townTuneVolume", townTuneVolume)
+	chrome.storage.local.set({ townTuneVolume: townTuneVolume });
 }
 
 function restoreOptions() {
@@ -311,13 +313,13 @@ function responseMessage(message = 'An unknown error occurred', success = false)
 }
 
 async function getPermissions(url) {
-	chrome.permissions.contains({ origins: [`*://${new URL(url).hostname}/*`] }, hasPerms => {
+	chrome.permissions.contains({ origins: [`http://${new URL(url).hostname}/*`, `https://${new URL(url).hostname}/*`] }, hasPerms => {
 		if (hasPerms) {
-			console.log('Has permissions!');
+			printDebug('Has permissions!');
 			return true;
 		}
 		else {
-			chrome.permissions.request({ origins: [`*://${new URL(url).hostname}/*`] }, hasPerms => {
+			chrome.permissions.request({ origins: [`http://${new URL(url).hostname}/*`, `https://${new URL(url).hostname}/*`] }, hasPerms => {
 				if (!(hasPerms)) {
 					responseMessage('You must accept the permissions to use that weather provider.');
 					throw 'No permissions';
@@ -527,4 +529,14 @@ function getWeather(url) {
 
 function updateChildrenState(disabled, childElement){
 	childElement.disabled = disabled
+}
+
+if (DEBUG_FLAG) {
+	window.setTime = function (hour, playTownTune) {
+		notifyListeners("hourMusic", [hour, options.weather, options.music, playTownTune]);
+	};
+	window.changeWeather = function (newWeather) {
+		weather = newWeather;
+		callback();
+	}
 }

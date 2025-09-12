@@ -2,7 +2,7 @@
 
 'use strict';
 
-function NotificationManager(addEventListener, isEnabled) {
+export function NotificationManager(addEventListener, isEnabled) {
 	function doNotification(message, icon = 'clock') {
 		const notificationOptions = {
 				type: 'basic',

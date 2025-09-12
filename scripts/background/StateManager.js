@@ -2,8 +2,14 @@
 // and it will notify certain events.
 
 'use strict';
+import { printDebug, checkMediaSessionSupport, setupOffscreenDocument } from './Utility.js';
+import { TimeKeeper } from './TimeKeeper.js';
+import { WeatherManager } from './WeatherManager.js';
+import { BadgeManager } from './BadgeManager.js';
+import { TabAudioHandler } from './TabAudioHandler.js';
+import { TownTuneManager } from './TownTuneManager.js';
 
-function StateManager() {
+export function StateManager() {
 	let self;
 	self = this;
 
@@ -15,12 +21,19 @@ function StateManager() {
 
 	let timeKeeper = new TimeKeeper();
 	let tabAudio = new TabAudioHandler();
-	let townTuneManager = new TownTuneManager();
+	let townTuneManagerAvailable = false;
+	let townTuneManager = null;
+	if (!chrome.offscreen) {
+		townTuneManagerAvailable = true;
+		townTuneManager = new TownTuneManager();
+	}
 	let badgeManager;
 	let weatherManager;
 	let isKKTime;
 	let startup = true;
 	let browserClosed = false;
+
+	if (chrome.action) chrome.browserAction = chrome.action;
 
 	this.registerCallback = function (event, callback) {
 		callbacks[event] = callbacks[event] || [];
@@ -71,7 +84,12 @@ function StateManager() {
 		if (!options.paused || event === "pause" || event === "volume") {
 			var callbackArr = callbacks[event] || [];
 			for (var i = 0; i < callbackArr.length; i++) {
-				callbackArr[i].apply(window, args);
+				//callbackArr[i].apply(window, args);
+				chrome.runtime.sendMessage({
+					"type": event,
+					"target": "service-worker",
+					"data": args
+				})
 			}
 			printDebug("Notified listeners of " + event + " with args: " + args);
 		}
@@ -110,18 +128,15 @@ function StateManager() {
 			kkSelectedSongsEnable: false,
 			kkSelectedSongs: []
 		}, items => {
-			if (window.localStorage.getItem('paused') == null) {
-				window.localStorage.setItem('paused', `${items.paused}`);
-			}
-			if (window.localStorage.getItem('volume') == null) {
-				window.localStorage.setItem('volume', `${items.volume}`);
-			}
-			if (window.localStorage.getItem('townTuneVolume') == null) {
-				window.localStorage.setItem('townTuneVolume', `${items.townTuneVolume}`);
-			}	
-			items.paused = window.localStorage.getItem("paused") == "true";
-			items.volume = (window.localStorage.getItem("volume") >= 0 && window.localStorage.getItem("volume") !== null) ? window.localStorage.getItem("volume") : 0.5;
-			items.townTuneVolume = (window.localStorage.getItem("townTuneVolume") >= 0 && window.localStorage.getItem("townTuneVolume") !== null) ? window.localStorage.getItem("townTuneVolume") : 0.75;
+			chrome.storage.local.get({ 
+				paused: items.paused,
+				volume: items.volume,
+				townTuneVolume: items.townTuneVolume 
+			}, localItems => {
+				items.paused = localItems.paused === true;
+				items.volume = (localItems.volume >= 0 && localItems.volume !== null) ? localItems.volume : 0.5;
+				items.townTuneVolume = (localItems.townTuneVolume >= 0 && localItems.townTuneVolume !== null) ? localItems.volume : 0.75;
+			})
 			options = items;
 			if (typeof callback === 'function') callback();
 		});
@@ -178,7 +193,18 @@ function StateManager() {
 			let musicAndWeather = getMusicAndWeather();
 			notifyListeners("hourMusic", [hour, musicAndWeather.weather, musicAndWeather.music, true]);
 			// Play hourly tune when paused, but only if town tune is enabled
-			if (options.paused && (options.absoluteTownTune && options.enableTownTune)) townTuneManager.playTune(tabAudio.audible);
+			if (options.paused && (options.absoluteTownTune && options.enableTownTune)) {
+				if (chrome.offscreen) {
+					setupOffscreenDocument('offscreen.html');
+					chrome.runtime.sendMessage({
+						type: 'townTuneManager.playTune',
+						target: 'offscreen-doc',
+						data: [tabAudio.audible]
+					});
+				} else {
+					townTuneManager.playTune(tabAudio.audible);
+				}
+			}
 		}
 	});
 
@@ -253,10 +279,10 @@ function StateManager() {
 	});
 
 	function toggleMusic() {
-		window.localStorage.setItem('paused', !options.paused);
+		chrome.storage.local.set({ paused: !options.paused });
 		getSyncedOptions(() => {
- 			if (options.paused) notifyListeners("pause");
- 			else self.activate();
+			if (options.paused) notifyListeners("pause");
+			else self.activate();
 		});
 	}
 
@@ -274,14 +300,4 @@ function StateManager() {
 			});
 		}
 	}
-
-	// Make notifyListeners public to allow for easier notification sending.
-	window.notify = notifyListeners;
-
-	if (DEBUG_FLAG) {
-		window.setTime = function (hour, playTownTune) {
-			notifyListeners("hourMusic", [hour, options.weather, options.music, playTownTune]);
-		};
-	}
-
 }

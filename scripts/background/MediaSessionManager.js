@@ -2,7 +2,9 @@
 
 'use strict';
 
-function MediaSessionManager() {
+import { getLocalUrl } from "./Utility";
+
+export function MediaSessionManager() {
 
 	let gameNames = {
 		'animal-crossing': 'Animal Crossing',
@@ -56,15 +58,13 @@ function MediaSessionManager() {
 			let imagePath = `../img/cover/${kk ? 'kk/' : ''}${name}.png`
 			printDebug(`Trying to retrieve art from local storage: "${imagePath}"`)
 
-			let xhr = new XMLHttpRequest();
-			xhr.open('GET', getLocalUrl(imagePath), true);
-			xhr.responseType = 'blob';
-			xhr.onload = function () {
+			return fetch(getLocalUrl(imagePath))
+			.then(async (response) => response.blob())
+			.then(async (blob) => {
 				printDebug('Successfully created blob url from local image')
-				resolve(URL.createObjectURL(this.response));
-			};
-			xhr.onerror = fallback;
-			xhr.send();
+				return URL.createObjectURL(blob);
+			})
+			.catch(() => fallback)
 
 			// Fallback function
 			async function fallback() {
@@ -76,12 +76,12 @@ function MediaSessionManager() {
 				if (kk) {
 					let kkArtUrl = `https://acmusicext.com/static/kk/art/${name}.png`
 					printDebug(`Using fallback remote url: "${kkArtUrl}"`)
-					resolve(kkArtUrl);
+					return kkArtUrl;
 				}
 				else {
 					let defaultKkArtName = 'kk'
 					printDebug(`Try using default kk art: ${defaultKkArtName}`)
-					resolve(await toDataURL('defaultKkArtName'));
+					return await toDataURL('defaultKkArtName');
 				} 
 			}
 		});

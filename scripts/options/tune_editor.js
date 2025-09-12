@@ -1,4 +1,5 @@
-$(function(){
+import { createBooper, createSampler, createTunePlayer } from '../global/tune_player.js';
+
 var pitchTemplate, playButton, saveButton, tune;
 const defaultTune = ["C3", "E3", "C3", "G2", "F2", "G2", "B2", "D3", "C3", "zZz", "?", "zZz", "C3", "-", "-", "zZz"]; // From AC: Wild World
 var tuneLength = 16;
@@ -69,8 +70,8 @@ var initControls = function() {
   var staff2 = document.querySelector('.staff2');
   pitchTemplate = document.querySelector('.pitch-template');
   playButton = document.querySelector('.play-tune');
-  resetButton = document.querySelector('.reset-tune');
-  randomizeButton = document.querySelector('.randomize-tune');
+  var resetButton = document.querySelector('.reset-tune');
+  var randomizeButton = document.querySelector('.randomize-tune');
   saveButton = document.querySelector('.save-tune');
   let volumeSlider = document.getElementById("townTuneVolume");
 
@@ -208,6 +209,3 @@ var updateTune = function(index, pitch) {
 };
 
 window.addEventListener('load', setup);
-}) //();
-// changed execution of tune_editor.js by adding the jQuery document-ready method to the start (https://learn.jquery.com/using-jquery-core/document-ready/)
-// (=> This files' content waits until the page is finished loading before it runs)

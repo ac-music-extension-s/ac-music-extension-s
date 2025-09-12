@@ -1,8 +1,10 @@
 // Handles tabs playing audio
 
+import { printDebug } from './Utility.js';
+
 'use strict';
 
-function TabAudioHandler() {
+export function TabAudioHandler() {
 
     let tabUpdatedHandler;
     let checkTabsInterval;

@@ -4,7 +4,7 @@ Used for reference so the extension can easily know the song name and game each 
 Also used to make the songs more human-readable.
 */
 
-const KKSongList = [
+export const KKSongList = [
     'AC - Aloha K.K.',
     'AC - Cafe K.K.',
     'AC - Comrade K.K.',
