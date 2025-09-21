@@ -1,31 +1,55 @@
 'use strict';
-import { printDebug } from './background/Utility.js' // Globally accessible helper functions
 
-function notifyListeners(event, args, source) {
-    if (!options.paused || event === "pause" || event === "volume") {
-        var callbackArr = callbacks[event] || [];
-        for (var i = 0; i < callbackArr.length; i++) {
-            callbackArr[i].apply(window, args);
-        }
-        printDebug("Notified listeners of " + event + " with args: " + args);
+import { AudioManager } from './scripts/background/AudioManager.js';
+import { printDebug } from './scripts/background/Utility.js';
+
+// Singleton event system for AudioManager
+const callbacks = {};
+function addEventListener(event, callback) {
+    if (!callbacks[event]) callbacks[event] = [];
+    callbacks[event].push(callback);
+}
+
+// Register all relevant event handlers for AudioManager
+const badgeEvents = [
+    'hourMusic', 'kkStart', 'gameChange', 'weatherChange', 'pause', 'tabAudio', 'musicFailed'
+];
+// registers event listeners during construction
+AudioManager(addEventListener, () => false, function(event, args, source) {
+    notifyOffscreenListeners(event, args, source)
+});
+
+// Register handlers for all events that may be sent from the service worker
+function notifyOffscreenListeners(event, args, source) {
+    printDebug('[offscreen.js] notifyOffscreenListeners called:', event, args);
+    const callbackArr = callbacks[event] || [];
+    for (let i = 0; i < callbackArr.length; i++) {
+        callbackArr[i](...args);
     }
-    if (source !== false) {
+    // Forward badge-relevant events to service worker (but not if they came from service worker)
+    if (source !== false && badgeEvents.includes(event)) {
         chrome.runtime.sendMessage({
-            type: 'notifyListeners',
+            type: event,
             target: 'service-worker',
-            data: [event, args, false]
-        })
+            data: args
+        });
     }
-};
-window.notify = notifyListeners;
+}
+globalThis.notify = notifyOffscreenListeners;
 
-import { AudioManager } from './scripts/background/AudioManager.js' // Handles playing hourly music, KK, and the town tune.
 
-async function handleMessages(message) {
-    if (message.target !== 'offscreen-doc') return;
-    else if (message.type == 'AudioManager') new AudioManager(...message.data)
-    else if (window[message.type]) window[message.type](...message.data)
-    else printDebug(message.type + ' not found')
+function handleMessages(message, _sender, _sendResponse) {
+    printDebug('[offscreen.js] handleMessages received:', message);
+    if (message && message.target === 'offscreen-doc') {
+        if (callbacks[message.type]) {
+            printDebug('[offscreen.js] Processing message type:', message.type, 'with data:', message.data);
+            callbacks[message.type].forEach(cb => cb(...message.data));
+        } else {
+            printDebug('[offscreen.js] No callback registered for message type:', message.type);
+        }
+    } else {
+        printDebug('[offscreen.js] Message not targeted for offscreen-doc:', message);
+    }
 }
 
 chrome.runtime.onMessage.addListener(handleMessages);

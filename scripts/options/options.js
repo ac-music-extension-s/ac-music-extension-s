@@ -48,7 +48,7 @@ function containsSpace(string) {
 }
 
 
-window.onload = function () {
+globalThis.onload = function () {
 	restoreOptions();
 	document.getElementById('version-number').textContent = 'Version ' + chrome.runtime.getManifest().version;
 	document.getElementById('volume').onchange = saveOptions;
@@ -245,14 +245,14 @@ function restoreOptions() {
 		kkSelectedSongsEnable: false,
 		kkSelectedSongs: []
 	}, items => {
-		if (window.localStorage.getItem('volume') == null) {
-			window.localStorage.setItem('volume', `${items.volume}`);
+		if (globalThis.localStorage.getItem('volume') == null) {
+			globalThis.localStorage.setItem('volume', `${items.volume}`);
 		}
-		if (window.localStorage.getItem('townTuneVolume') == null) {
-			window.localStorage.setItem('townTuneVolume', `${items.townTuneVolume}`);
+		if (globalThis.localStorage.getItem('townTuneVolume') == null) {
+			globalThis.localStorage.setItem('townTuneVolume', `${items.townTuneVolume}`);
 		}
-		items.volume = (window.localStorage.getItem("volume") >= 0 && window.localStorage.getItem("volume") !== null) ? window.localStorage.getItem("volume") : 0.5;
-		items.townTuneVolume = (window.localStorage.getItem("townTuneVolume") >= 0 && window.localStorage.getItem("volume") !== null) ? window.localStorage.getItem("townTuneVolume") : 0.75;
+		items.volume = (globalThis.localStorage.getItem("volume") >= 0 && globalThis.localStorage.getItem("volume") !== null) ? globalThis.localStorage.getItem("volume") : 0.5;
+		items.townTuneVolume = (globalThis.localStorage.getItem("townTuneVolume") >= 0 && globalThis.localStorage.getItem("volume") !== null) ? globalThis.localStorage.getItem("townTuneVolume") : 0.75;
 		document.getElementById('volume').value = items.volume;
 		document.getElementById('volumeText').innerText = `${formatPercentage(items.volume*100)}`;
 		document.getElementById(items.music).checked = true;
@@ -532,10 +532,10 @@ function updateChildrenState(disabled, childElement){
 }
 
 if (DEBUG_FLAG) {
-	window.setTime = function (hour, playTownTune) {
+	globalThis.setTime = function (hour, playTownTune) {
 		notifyListeners("hourMusic", [hour, options.weather, options.music, playTownTune]);
 	};
-	window.changeWeather = function (newWeather) {
+	globalThis.changeWeather = function (newWeather) {
 		weather = newWeather;
 		callback();
 	}

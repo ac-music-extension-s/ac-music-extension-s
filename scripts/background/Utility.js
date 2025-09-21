@@ -1,44 +1,42 @@
 // Globally accessible helper functions
-
 'use strict';
-
-export var DEBUG_FLAG = true;
+// Enable this to get debug logs, disabled for production
+export var DEBUG_FLAG = false;
 
 // Returns a hour-formatted string of a time
 export function formatHour(time) {
-	if (time == -1) {
-		return '';
-	}
-	if (time == 0) {
-		return '12am';
-	}
-	if (time == 12) {
-		return '12pm';
-	}
-	if (time < 13) {
-		return time + 'am';
-	}
-	return (time - 12) + 'pm';
+  if (time == -1) {
+    return '';
+  }
+  if (time == 0) {
+    return '12am';
+  }
+  if (time == 12) {
+    return '12pm';
+  }
+  if (time < 13) {
+    return time + 'am';
+  }
+  return (time - 12) + 'pm';
 }
 
 export function printDebug(...args) {
-	if (DEBUG_FLAG) console.log(...args);
+  if (DEBUG_FLAG) console.log(...args);
 }
 
 
 // Returns a copy of this string having its first letter uppercased
 export function capitalize(string) {
-	return string.charAt(0).toUpperCase() + string.slice(1)
+  return string.charAt(0).toUpperCase() + string.slice(1)
 }
 
 export function getLocalUrl(relativePath) {
-	return chrome.runtime.getURL(relativePath)
+  return chrome.runtime.getURL(relativePath)
 }
 
-var supportsMediaSession = (typeof(navigator.mediaSession) !== "undefined");
-
+var supportsMediaSession = (typeof (navigator.mediaSession) !== "undefined");
 export function checkMediaSessionSupport(lambda) {
-	if (supportsMediaSession) lambda();
+  if (supportsMediaSession) lambda();
 }
 
 let creating; // A global promise to avoid concurrency issues

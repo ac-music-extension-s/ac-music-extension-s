@@ -135,7 +135,7 @@ var flashName = function(index, duration) {
  * @desc   Plays the town tune using createBooper as an instrument, used only by the town tune editor
  */
 var playTune = function() {
-  var townTuneVolume = (window.localStorage.getItem("townTuneVolume") >= 0 && window.localStorage.getItem("townTuneVolume") == null) ? window.localStorage.getItem("townTuneVolume") : defaultTownTuneVolume
+  var townTuneVolume = (globalThis.localStorage.getItem("townTuneVolume") >= 0 && globalThis.localStorage.getItem("townTuneVolume") == null) ? globalThis.localStorage.getItem("townTuneVolume") : defaultTownTuneVolume
   disableEditor();
   tunePlayer.playTune(tune, booper, 240, townTuneVolume).eachNote(flashName).done(enableEditor);
 };
@@ -203,9 +203,9 @@ var updateColor = function(index, pitch){
 } 
 
 var updateTune = function(index, pitch) {
-  var townTuneVolume = (window.localStorage.getItem("townTuneVolume") >= 0 && window.localStorage.getItem("townTuneVolume") !== null) ? window.localStorage.getItem("townTuneVolume") : defaultTownTuneVolume;
+  var townTuneVolume = (globalThis.localStorage.getItem("townTuneVolume") >= 0 && globalThis.localStorage.getItem("townTuneVolume") !== null) ? globalThis.localStorage.getItem("townTuneVolume") : defaultTownTuneVolume;
   tune[index] = pitch;
   booper.playNote(pitch, undefined, undefined, townTuneVolume);
 };
 
-window.addEventListener('load', setup);
+globalThis.addEventListener('load', setup);
