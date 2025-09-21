@@ -44,7 +44,6 @@ export function StateManager() {
 		return options[option];
 	};
 
-	let tabAudioCallbackRegistered = false;
 	this.activate = function () {
 		printDebug("Activating StateManager");
 
@@ -59,13 +58,9 @@ export function StateManager() {
 						let musicAndWeather = getMusicAndWeather();
 						// Sends a different event on startup to get the "hourMusic" desktop notification.
 						if (startup) {
-							printDebug("[StateManager] Sending hourMusic event", timeKeeper.getHour(), musicAndWeather.weather, musicAndWeather.music, false);
 							notifyListeners("hourMusic", [timeKeeper.getHour(), musicAndWeather.weather, musicAndWeather.music, false], callbacks, options);
 							startup = false;
-						} else {
-							printDebug("[StateManager] Sending weatherChange event", timeKeeper.getHour(), musicAndWeather.weather, musicAndWeather.music, false);
-							notifyListeners("weatherChange", [timeKeeper.getHour(), musicAndWeather.weather, musicAndWeather.music, false], callbacks, options);
-						}
+						} else notifyListeners("weatherChange", [timeKeeper.getHour(), musicAndWeather.weather, musicAndWeather.music, false], callbacks, options);
 					}
 				});
 			}
@@ -75,11 +70,11 @@ export function StateManager() {
 				let musicAndWeather = getMusicAndWeather();
 				if (musicAndWeather.weather) notifyListeners("hourMusic", [timeKeeper.getHour(), musicAndWeather.weather, musicAndWeather.music, false], callbacks, options);
 			}
-			if (!tabAudioCallbackRegistered) {
+			if (!tabAudio.activated) {
 				tabAudio.registerCallback(audible => {
 					notifyListeners("tabAudio", [audible, options.tabAudio, options.tabAudioReduceValue], callbacks, options);
 				});
-				tabAudioCallbackRegistered = true;
+				tabAudio.activate();
 			} else {
 				tabAudio.checkTabs(true);
 			}

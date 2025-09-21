@@ -29,7 +29,7 @@ export function MediaSessionManager() {
     });
 }
 
-	// Updates the mediasession metadata (for kk)
+	// Updates the mediasession metadata (for kk) - only available as 128x128
 	this.updateMetadataKK = async function (title, fileName) {
     checkMediaSessionSupport(async () => {
         let metadata = new MediaMetadata({
@@ -39,7 +39,7 @@ export function MediaSessionManager() {
         });
         let artworkSrc = await toDataURL(fileName, true);
         metadata.artwork = [
-            { src: artworkSrc, sizes: '512x512', type: 'image/png' }
+            { src: artworkSrc, sizes: '128x128', type: 'image/png' }
         ];
         navigator.mediaSession.metadata = metadata;
         printDebug('Updated MediaSession (kk): ', navigator.mediaSession.metadata);
@@ -49,14 +49,7 @@ export function MediaSessionManager() {
 	// Gets a blob URL from a local file.
 	function toDataURL(name, kk = false) {
 		return new Promise(resolve => {
-			let imagePath;
-			if (kk) {
-				// For KK music, always use kk.png regardless of song name
-				imagePath = `../img/cover/kk.png`;
-			} else {
-				// For regular hourly music, use the game name
-				imagePath = `../img/cover/${name}.png`;
-			}
+			let imagePath = `../img/cover/${kk ? 'kk' : name}.png`
 			printDebug(`Trying to retrieve art from local storage: "${imagePath}"`)
 
 			return fetch(getLocalUrl(imagePath))

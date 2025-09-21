@@ -1,8 +1,6 @@
 // Globally accessible helper functions
-
-
-
 'use strict';
+// Enable this to get debug logs, disabled for production
 export var DEBUG_FLAG = true;
 
 // Returns a hour-formatted string of a time
@@ -36,7 +34,7 @@ export function getLocalUrl(relativePath) {
   return chrome.runtime.getURL(relativePath)
 }
 
-var supportsMediaSession = (typeof(navigator.mediaSession) !== "undefined");
+var supportsMediaSession = (typeof (navigator.mediaSession) !== "undefined");
 export function checkMediaSessionSupport(lambda) {
   if (supportsMediaSession) lambda();
 }

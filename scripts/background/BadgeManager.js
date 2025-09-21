@@ -1,98 +1,3 @@
-// Static handler for direct badge updates in service worker
-export function handleBadgeEvent(type, args) {
-	// This function mirrors the logic in the onMessage handler
-	// 'this' context is not used, so we can call setIcon/setBadgeText as statics
-	// Use chrome.action for Manifest V3
-	const actionApi = (typeof chrome !== 'undefined' && chrome.action) ? chrome.action : undefined;
-	function setBadgeText(text, color = [57, 230, 0, 255]) {
-		if (!actionApi) {
-			console.error('[BadgeManager] chrome.action is not available in this context. Cannot set badge text.');
-			return;
-		}
-		actionApi.setBadgeText({ text });
-		actionApi.setBadgeBackgroundColor({ color });
-		console.log('[BadgeManager] setBadgeText', text);
-	}
-	function setIcon(icon) {
-		if (!actionApi) {
-			console.error('[BadgeManager] chrome.action is not available in this context. Cannot set icon.');
-			return;
-		}
-		let path;
-		if (icon === 'kk') {
-			path = {
-				128: `img/icons/kk/128.png`,
-				64: `img/icons/kk/64.png`,
-				32: `img/icons/kk/32.png`,
-			};
-		} else if (icon === 'paused') {
-			path = {
-				128: `img/icons/status/paused/128.png`,
-				64: `img/icons/status/paused/64.png`,
-				32: `img/icons/status/paused/32.png`,
-			};
-		} else if (["sunny", "raining", "snowing"].includes(icon)) {
-			path = {
-				128: `img/icons/status/${icon}/128.png`,
-				64: `img/icons/status/${icon}/64.png`,
-				32: `img/icons/status/${icon}/32.png`,
-			};
-		} else {
-			// fallback to sunny
-			path = {
-				128: `img/icons/status/sunny/128.png`,
-				64: `img/icons/status/sunny/64.png`,
-				32: `img/icons/status/sunny/32.png`,
-			};
-		}
-		console.log('[BadgeManager] setIcon called with', icon, path);
-		actionApi.setIcon({ path });
-	}
-	// Minimal state for badgeText/lastWeather
-	let badgeText = '';
-	let lastWeather = 'sunny';
-	function safeFormatHour(hour) {
-		if (typeof formatHour === 'function') return formatHour(hour);
-		return String(hour).padStart(2, '0');
-	}
-	if (type === 'hourMusic') {
-		let hour = args[0];
-		let weather = args[1] || 'sunny';
-		badgeText = `${safeFormatHour(hour)}`;
-		setBadgeText(badgeText);
-		setIcon(weather);
-		lastWeather = weather;
-	} else if (type === 'kkStart') {
-		badgeText = "KK";
-		setBadgeText(badgeText);
-		setIcon('kk');
-	} else if (type === 'pause') {
-		let tabPause = args[0];
-		if (tabPause) {
-			setBadgeText("ll");
-		} else setBadgeText("");
-		setIcon('paused');
-	} else if (type === 'unpause') {
-		setBadgeText(badgeText);
-		setIcon(lastWeather);
-	} else if (type === 'musicFailed') {
-		setBadgeText("x", [230, 0, 0, 255]);
-	} else if (type === 'gameChange' || type === 'weatherChange') {
-		let hour = args[0];
-		let weather = args[1];
-		setIcon(weather);
-		lastWeather = weather;
-		setBadgeText(badgeText);
-	} else if (type === 'tabAudio') {
-		if (args[0]) {
-			setBadgeText(badgeText);
-			setIcon(lastWeather);
-		} else {
-			setBadgeText("ll");
-			setIcon('paused');
-		}
-	}
-}
 // Handles the badge on the icon
 
 'use strict';
@@ -141,34 +46,23 @@ export function BadgeManager(addEventListener, isEnabledStart) {
 			badgeIcon = icon;
 			lastWeather = icon;
 		}
-		let path;
 		if (!icon) icon = 'sunny';
+		
+		// Determine the base path based on icon type
+		let basePath;
 		if (icon === 'kk') {
-			path = {
-				128: `img/icons/kk/128.png`,
-				64: `img/icons/kk/64.png`,
-				32: `img/icons/kk/32.png`,
-			};
-		} else if (icon === 'paused') {
-			path = {
-				128: `img/icons/status/paused/128.png`,
-				64: `img/icons/status/paused/64.png`,
-				32: `img/icons/status/paused/32.png`,
-			};
-		} else if (["sunny", "raining", "snowing"].includes(icon)) {
-			path = {
-				128: `img/icons/status/${icon}/128.png`,
-				64: `img/icons/status/${icon}/64.png`,
-				32: `img/icons/status/${icon}/32.png`,
-			};
+			basePath = 'img/icons/kk';
 		} else {
-			// fallback to sunny
-			path = {
-				128: `img/icons/status/sunny/128.png`,
-				64: `img/icons/status/sunny/64.png`,
-				32: `img/icons/status/sunny/32.png`,
-			};
+			basePath = `img/icons/status/${icon}`;
 		}
+		
+		// Create the path object for all sizes
+		const path = {
+			128: `${basePath}/128.png`,
+			64: `${basePath}/64.png`,
+			32: `${basePath}/32.png`,
+		};
+		
 		console.log('[BadgeManager] setIcon called with', icon, path);
 		actionApi.setIcon({ path });
 	}
@@ -255,7 +149,25 @@ export function BadgeManager(addEventListener, isEnabledStart) {
 		}
 	});
 
-	// Add handleEvent method that can be called directly
+	// Helper function to generate icon paths with proper URLs for service worker context
+	function getIconPaths(icon) {
+		if (!icon) icon = 'sunny';
+		
+		let basePath;
+		if (icon === 'kk') {
+			basePath = 'img/icons/kk';
+		} else {
+			basePath = `img/icons/status/${icon}`;
+		}
+		
+		return {
+			128: chrome.runtime.getURL(`${basePath}/128.png`),
+			64: chrome.runtime.getURL(`${basePath}/64.png`),
+			32: chrome.runtime.getURL(`${basePath}/32.png`)
+		};
+	}
+
+	// Add handleEvent method that can be called directly (for service worker context)
 	this.handleEvent = function(type, args) {
 		console.log('[BadgeManager] handleEvent called:', type, args);
 		
@@ -272,37 +184,9 @@ export function BadgeManager(addEventListener, isEnabledStart) {
 			// If this is a real hourly change, it means KK time ended, so we switch back to regular music
 			badgeText = `${safeFormatHour(hour)}`;
 			if (isEnabled) updateBadgeText();
-			// Use chrome.runtime.getURL for proper extension URLs in service worker
-			console.log('[BadgeManager] Setting weather icon:', weather);
-			let iconPaths;
-			if (weather === 'sunny') {
-				iconPaths = {
-					128: chrome.runtime.getURL("img/icons/status/sunny/128.png"),
-					64: chrome.runtime.getURL("img/icons/status/sunny/64.png"),
-					32: chrome.runtime.getURL("img/icons/status/sunny/32.png")
-				};
-			} else if (weather === 'raining') {
-				iconPaths = {
-					128: chrome.runtime.getURL("img/icons/status/raining/128.png"),
-					64: chrome.runtime.getURL("img/icons/status/raining/64.png"),
-					32: chrome.runtime.getURL("img/icons/status/raining/32.png")
-				};
-			} else if (weather === 'snowing') {
-				iconPaths = {
-					128: chrome.runtime.getURL("img/icons/status/snowing/128.png"),
-					64: chrome.runtime.getURL("img/icons/status/snowing/64.png"),
-					32: chrome.runtime.getURL("img/icons/status/snowing/32.png")
-				};
-			} else {
-				// Fallback to sunny
-				iconPaths = {
-					128: chrome.runtime.getURL("img/icons/status/sunny/128.png"),
-					64: chrome.runtime.getURL("img/icons/status/sunny/64.png"),
-					32: chrome.runtime.getURL("img/icons/status/sunny/32.png")
-				};
-			}
 			
-			actionApi.setIcon({ path: iconPaths }).then(() => {
+			console.log('[BadgeManager] Setting weather icon:', weather);
+			actionApi.setIcon({ path: getIconPaths(weather) }).then(() => {
 				console.log('[BadgeManager] Weather icon set successfully to:', weather);
 			}).catch((error) => {
 				console.error('[BadgeManager] Weather icon setting failed:', error);
@@ -313,13 +197,8 @@ export function BadgeManager(addEventListener, isEnabledStart) {
 			badgeText = "KK";
 			console.log('[BadgeManager] kkStart event');
 			if (isEnabled) updateBadgeText();
-			actionApi.setIcon({
-				path: {
-					128: chrome.runtime.getURL("img/icons/kk/128.png"),
-					64: chrome.runtime.getURL("img/icons/kk/64.png"),
-					32: chrome.runtime.getURL("img/icons/kk/32.png")
-				}
-			}).then(() => {
+			
+			actionApi.setIcon({ path: getIconPaths('kk') }).then(() => {
 				console.log('[BadgeManager] KK icon set successfully');
 			}).catch((error) => {
 				console.error('[BadgeManager] KK icon setting failed:', error);
@@ -327,18 +206,11 @@ export function BadgeManager(addEventListener, isEnabledStart) {
 			lastIconType = 'kk';
 		} else if (type === 'pause') {
 			// For pause events, always set "ll" regardless of args
-			// The pause event itself indicates we should show pause text
 			actionApi.setBadgeText({ text: "ll" });
 			actionApi.setBadgeBackgroundColor({ color: [57, 230, 0, 255] });
 			console.log('[BadgeManager] setBadgeText ll (pause)');
-			// Set paused icon with proper URL
-			actionApi.setIcon({
-				path: {
-					128: chrome.runtime.getURL("img/icons/status/paused/128.png"),
-					64: chrome.runtime.getURL("img/icons/status/paused/64.png"),
-					32: chrome.runtime.getURL("img/icons/status/paused/32.png")
-				}
-			}).then(() => {
+			
+			actionApi.setIcon({ path: getIconPaths('paused') }).then(() => {
 				console.log('[BadgeManager] Paused icon set successfully');
 			}).catch((error) => {
 				console.error('[BadgeManager] Paused icon setting failed:', error);
@@ -346,32 +218,14 @@ export function BadgeManager(addEventListener, isEnabledStart) {
 		} else if (type === 'unpause') {
 			isTabAudible = false;
 			if (isEnabled) setBadgeText(badgeText);
+			
 			// Restore the appropriate icon based on what was showing before pause
-			if (lastIconType === 'kk') {
-				actionApi.setIcon({
-					path: {
-						128: chrome.runtime.getURL("img/icons/kk/128.png"),
-						64: chrome.runtime.getURL("img/icons/kk/64.png"),
-						32: chrome.runtime.getURL("img/icons/kk/32.png")
-					}
-				}).then(() => {
-					console.log('[BadgeManager] KK icon restored successfully');
-				}).catch((error) => {
-					console.error('[BadgeManager] KK icon restore failed:', error);
-				});
-			} else {
-				// Restore weather icon using proper URL
-				let iconPaths = {
-					128: chrome.runtime.getURL(`img/icons/status/${lastWeather}/128.png`),
-					64: chrome.runtime.getURL(`img/icons/status/${lastWeather}/64.png`),
-					32: chrome.runtime.getURL(`img/icons/status/${lastWeather}/32.png`)
-				};
-				actionApi.setIcon({ path: iconPaths }).then(() => {
-					console.log('[BadgeManager] Weather icon restored to:', lastWeather);
-				}).catch((error) => {
-					console.error('[BadgeManager] Weather icon restore failed:', error);
-				});
-			}
+			const iconToRestore = lastIconType === 'kk' ? 'kk' : lastWeather;
+			actionApi.setIcon({ path: getIconPaths(iconToRestore) }).then(() => {
+				console.log(`[BadgeManager] ${lastIconType === 'kk' ? 'KK' : 'Weather'} icon restored successfully to:`, iconToRestore);
+			}).catch((error) => {
+				console.error('[BadgeManager] Icon restore failed:', error);
+			});
 		} else if (type === 'musicFailed') {
 			setBadgeText("x", [230, 0, 0, 255]);
 		} else if (type === 'gameChange' || type === 'weatherChange') {
@@ -392,43 +246,20 @@ export function BadgeManager(addEventListener, isEnabledStart) {
 			if (args[0]) {
 				isTabAudible = false;
 				if (isEnabled) setBadgeText(badgeText);
-				if (lastIconType === 'kk') {
-					actionApi.setIcon({
-						path: {
-							128: chrome.runtime.getURL("img/icons/kk/128.png"),
-							64: chrome.runtime.getURL("img/icons/kk/64.png"),
-							32: chrome.runtime.getURL("img/icons/kk/32.png")
-						}
-					}).then(() => {
-						console.log('[BadgeManager] tabAudio unpause event, restored KK icon successfully');
-					}).catch((error) => {
-						console.error('[BadgeManager] tabAudio KK icon restore failed:', error);
-					});
-				} else {
-					// Restore weather icon using proper URL
-					let iconPaths = {
-						128: chrome.runtime.getURL(`img/icons/status/${lastWeather}/128.png`),
-						64: chrome.runtime.getURL(`img/icons/status/${lastWeather}/64.png`),
-						32: chrome.runtime.getURL(`img/icons/status/${lastWeather}/32.png`)
-					};
-					actionApi.setIcon({ path: iconPaths }).then(() => {
-						console.log('[BadgeManager] tabAudio unpause event, set weather icon:', lastWeather);
-					}).catch((error) => {
-						console.error('[BadgeManager] tabAudio weather icon restore failed:', error);
-					});
-				}
+				
+				const iconToRestore = lastIconType === 'kk' ? 'kk' : lastWeather;
+				actionApi.setIcon({ path: getIconPaths(iconToRestore) }).then(() => {
+					console.log(`[BadgeManager] tabAudio unpause event, restored ${lastIconType === 'kk' ? 'KK' : 'weather'} icon:`, iconToRestore);
+				}).catch((error) => {
+					console.error('[BadgeManager] tabAudio icon restore failed:', error);
+				});
 			} else {
 				isTabAudible = true;
 				// Use actionApi directly to bypass updateBadgeText logic
 				actionApi.setBadgeText({ text: "ll" });
 				actionApi.setBadgeBackgroundColor({ color: [57, 230, 0, 255] });
-				actionApi.setIcon({
-					path: {
-						128: chrome.runtime.getURL("img/icons/status/paused/128.png"),
-						64: chrome.runtime.getURL("img/icons/status/paused/64.png"),
-						32: chrome.runtime.getURL("img/icons/status/paused/32.png")
-					}
-				}).then(() => {
+				
+				actionApi.setIcon({ path: getIconPaths('paused') }).then(() => {
 					console.log('[BadgeManager] tabAudio pause event, set paused icon with ll text successfully');
 				}).catch((error) => {
 					console.error('[BadgeManager] tabAudio paused icon failed:', error);
