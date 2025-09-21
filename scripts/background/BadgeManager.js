@@ -117,6 +117,11 @@ export function BadgeManager(addEventListener, isEnabledStart) {
 				printDebug('[BadgeManager] pause event, set paused icon');
 			}
 		} else if (type === 'unpause') {
+			if (lastIconType === "kk") {
+				badgeText = "KK";
+			} else {
+				badgeText = `${safeFormatHour(new Date().getHours())}`;
+			}
 			isTabAudible = false;
 			if (isEnabled) setBadgeText(badgeText);
 			
@@ -162,7 +167,9 @@ export function BadgeManager(addEventListener, isEnabledStart) {
 			lastWeather = weather;
 			printDebug('[BadgeManager] change event, set icon:', weather);
 		} else if (type === 'tabAudio') {
-			if (args[0]) {
+			const audibleTabsDetected = args[0];
+			const tabAudioSetting = args[1];
+			if (audibleTabsDetected && (tabAudioSetting === 'pause' || tabaudioSetting === 'reduce')) {
 				isTabAudible = true;
 				if (useServiceWorkerIconPaths) {
 					actionApi.setBadgeText({ text: "ll" });
@@ -179,6 +186,11 @@ export function BadgeManager(addEventListener, isEnabledStart) {
 				}
 			} else {
 				isTabAudible = false;
+				if (lastIconType === "kk") {
+					badgeText = "KK";
+				} else {
+					badgeText = `${safeFormatHour(new Date().getHours())}`;
+				}
 				if (isEnabled) setBadgeText(badgeText);
 				
 				if (useServiceWorkerIconPaths) {

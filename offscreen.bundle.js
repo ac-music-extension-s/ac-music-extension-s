@@ -186,7 +186,6 @@
 
   // Globally accessible helper functions
 
-
   // Returns a hour-formatted string of a time
   function formatHour$1(time) {
     if (time == -1) {
@@ -205,7 +204,6 @@
   }
 
   function printDebug(...args) {
-    console.log(...args);
   }
 
 
@@ -218,7 +216,7 @@
     return chrome.runtime.getURL(relativePath)
   }
 
-  var supportsMediaSession = (typeof(navigator.mediaSession) !== "undefined");
+  var supportsMediaSession = (typeof (navigator.mediaSession) !== "undefined");
   function checkMediaSessionSupport(lambda) {
     if (supportsMediaSession) lambda();
   }
@@ -251,7 +249,7 @@
       });
   };
 
-  	// Updates the mediasession metadata (for kk)
+  	// Updates the mediasession metadata (for kk) - only available as 128x128
   	this.updateMetadataKK = async function (title, fileName) {
       checkMediaSessionSupport(async () => {
           let metadata = new MediaMetadata({
@@ -261,7 +259,7 @@
           });
           let artworkSrc = await toDataURL(fileName, true);
           metadata.artwork = [
-              { src: artworkSrc, sizes: '512x512', type: 'image/png' }
+              { src: artworkSrc, sizes: '128x128', type: 'image/png' }
           ];
           navigator.mediaSession.metadata = metadata;
           printDebug('Updated MediaSession (kk): ', navigator.mediaSession.metadata);
@@ -271,39 +269,26 @@
   	// Gets a blob URL from a local file.
   	function toDataURL(name, kk = false) {
   		return new Promise(resolve => {
-  			let imagePath;
-  			if (kk) {
-  				// For KK music, always use kk.png regardless of song name
-  				imagePath = `../img/cover/kk.png`;
-  			} else {
-  				// For regular hourly music, use the game name
-  				imagePath = `../img/cover/${name}.png`;
-  			}
-  			printDebug(`Trying to retrieve art from local storage: "${imagePath}"`);
+  			let imagePath = `../img/cover/${kk ? 'kk' : name}.png`;
 
   			return fetch(getLocalUrl(imagePath))
   			.then(async (response) => response.blob())
   			.then(async (blob) => {
-  				printDebug('Successfully created blob url from local image');
   				return URL.createObjectURL(blob);
   			})
   			.catch(() => fallback)
 
   			// Fallback function
   			async function fallback() {
-  				printDebug('Could not create blob url from local image');
   				
   				// Prevent potential infinite loops.
   				if (name == 'kk') resolve('');
 
   				if (kk) {
   					let kkArtUrl = `https://acmusicext.com/static/kk/art/${name}.png`;
-  					printDebug(`Using fallback remote url: "${kkArtUrl}"`);
   					return kkArtUrl;
   				}
   				else {
-  					let defaultKkArtName = 'kk';
-  					printDebug(`Try using default kk art: ${defaultKkArtName}`);
   					return await toDataURL('defaultKkArtName');
   				} 
   			}
@@ -884,8 +869,7 @@
   		});
   	}
 
-  	// Plays a song for an hour, setting up loop times if
-  	// any exist
+  	// Plays a song for an hour, setting up loop times if any exist
   	function playHourSong(game, weather, hour, skipIntro, started) {
   		audio.loop = true;
 
@@ -938,8 +922,6 @@
   			if (loopTime) {
   				printDebug("setting loop times. start:", loopTime.start, "end:", loopTime.end);
 
-  				printDebug("delayToLoop: " + delayToLoop);
-
   				if (killLoopTimeout) killLoopTimeout();
   				let loopTimeout = setTimeout(() => {
   					printDebug("looping from", audio.currentTime, "to", loopTime.start);
@@ -949,19 +931,17 @@
   					setLoopTimes();
   				}, delayToLoop * 1000);
   				killLoopTimeout = () => {
-  					printDebug("killing loop timeout");
   					clearTimeout(loopTimeout);
   					loopTimeout = null;
   					killLoopTimeout = null;
   				};
-  			} else printDebug("no loop times found. looping full song");
+  			}
   		}
 
   		mediaSessionManager.updateMetadata(game, hour, weather);
   	}
 
   	function playKKMusic(_kkVersion) {
-  		printDebug('[AudioManager] playKKMusic called with version:', _kkVersion);
   		kkVersion = _kkVersion;
   		clearLoop();
   		audio.loop = false;
@@ -1065,12 +1045,10 @@
   	}
 
   	addEventListener("hourMusic", (hour, weather, game, isHourChange) => {
-  		printDebug('[AudioManager] hourMusic event received:', hour, weather, game, isHourChange);
   		playHourlyMusic(hour, weather, game, isHourChange);
   	});
 
   	addEventListener("kkStart", (_kkVersion) => {
-  		printDebug('[AudioManager] kkStart event received:', _kkVersion);
   		playKKMusic(_kkVersion);
   	});
 
@@ -1091,7 +1069,6 @@
 
   	// If a tab starts or stops playing audio
   	addEventListener("tabAudio", (audible, tabAudio, reduceValue) => {
-  		printDebug('[AudioManager] tabAudio event received:', audible, tabAudio, reduceValue);
   		if (audible != null) {
 
   			// Handles all cases except for an options switch.
@@ -1111,7 +1088,6 @@
 
   			// Handle play case when audible is true and tabAudio is 'play'
   			if (tabAudio == 'play' && audible && audio.paused) {
-  				printDebug('[AudioManager] Play case: unpausing audio');
   				if (audio.readyState >= 3 || audio.readyState == 0) {
   					if (!townTunePlaying) {
   						audio.play();
@@ -1152,15 +1128,13 @@
   const badgeEvents = [
       'hourMusic', 'kkStart', 'gameChange', 'weatherChange', 'pause', 'tabAudio', 'musicFailed'
   ];
-  // Initialize AudioManager - it registers event listeners during construction
+  // registers event listeners during construction
   AudioManager(addEventListener, () => false, function(event, args, source) {
       notifyOffscreenListeners(event, args, source);
   });
 
   // Register handlers for all events that may be sent from the service worker
-
   function notifyOffscreenListeners(event, args, source) {
-      printDebug('[offscreen.js] notifyOffscreenListeners called:', event, args);
       const callbackArr = callbacks[event] || [];
       for (let i = 0; i < callbackArr.length; i++) {
           callbackArr[i](...args);
@@ -1177,8 +1151,7 @@
   globalThis.notify = notifyOffscreenListeners;
 
 
-  function handleMessages(message, sender, sendResponse) {
-      printDebug('[offscreen.js] handleMessages received:', message);
+  function handleMessages(message, _sender, _sendResponse) {
       if (message && message.target === 'offscreen-doc') {
           if (callbacks[message.type]) {
               printDebug('[offscreen.js] Processing message type:', message.type, 'with data:', message.data);
@@ -1186,8 +1159,6 @@
           } else {
               printDebug('[offscreen.js] No callback registered for message type:', message.type);
           }
-      } else {
-          printDebug('[offscreen.js] Message not targeted for offscreen-doc:', message);
       }
   }
 

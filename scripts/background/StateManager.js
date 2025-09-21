@@ -273,6 +273,7 @@ export function StateManager() {
 				notifyListeners("pause", [], callbacks, options);
 				notifyListeners("tabAudio", [false, "pause", options.tabAudioReduceValue], callbacks, options);
 			} else {
+				notifyListeners("unpause", [], callbacks, options);
 				notifyListeners("tabAudio", [true, "play", options.tabAudioReduceValue], callbacks, options);
 				// Also notify hourMusic to trigger playback
 				let musicAndWeather = getMusicAndWeather();
@@ -311,7 +312,7 @@ export function notifyListeners(event, args, callbacks, options) {
 		}
 		// Always send to both offscreen-doc and service-worker in service worker context
 		const offscreenEvents = [
-			'hourMusic', 'kkStart', 'gameChange', 'weatherChange', 'pause', 'volume', 'tabAudio'
+			'hourMusic', 'kkStart', 'gameChange', 'weatherChange', 'pause', 'unpause', 'volume', 'tabAudio'
 		];
 		const isServiceWorker = (typeof importScripts === 'function');
 		if (isServiceWorker && offscreenEvents.includes(event)) {
