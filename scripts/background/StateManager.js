@@ -43,7 +43,6 @@ export function StateManager() {
 	this.getOption = function (option) {
 		return options[option];
 	};
-
 	this.activate = function () {
 		printDebug("Activating StateManager");
 
@@ -260,10 +259,6 @@ export function StateManager() {
 	chrome.tabs.onCreated.addListener(checkTabs);
 	setInterval(checkTabs, 1000);
 
-	tabAudio.registerCallback(audible => {
-		notifyListeners("tabAudio", [audible, options.tabAudio, options.tabAudioReduceValue], callbacks, options);
-	});
-
 	// Handle the user interactions in the media session dialogue.
 	checkMediaSessionSupport(() => {
 		navigator.mediaSession.setActionHandler('play', toggleMusic);
@@ -307,7 +302,7 @@ export function StateManager() {
 // Possible events include:
 // volume, kkStart, hourMusic, gameChange, weatherChange, pause, tabAudio, musicFailed
 export function notifyListeners(event, args, callbacks, options) {
-	console.log('[StateManager.js] notifyListeners called:', event, args, callbacks, options);
+	printDebug('[StateManager.js] notifyListeners called:', event, args, callbacks, options);
 	if (!options || !callbacks) return; // Defensive: don't proceed if missing
 	if (!options.paused || event === "pause" || event === "volume") {
 		var callbackArr = callbacks[event] || [];
@@ -330,7 +325,7 @@ export function notifyListeners(event, args, callbacks, options) {
 				globalThis.badgeManager.handleEvent(event, args);
 			}
 		} else {
-			console.log('[StateManager.js] Sending message to service-worker:', event, args);
+			printDebug('[StateManager.js] Sending message to service-worker:', event, args);
 			chrome.runtime.sendMessage({
 				"type": event,
 				"target": "service-worker",

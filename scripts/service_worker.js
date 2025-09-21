@@ -4,14 +4,14 @@ import { BadgeManager } from './background/BadgeManager.js';
 
 'use strict';
 
-// Events that require updating audio and badge
+// Events that need both badge updates AND audio playback
 const badgeAndAudioEvents = [
 	'hourMusic', 'kkStart', 'gameChange', 'weatherChange', 'pause', 'tabAudio', 'musicFailed'
 ];
 
 // Main message handler
 chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
-	// Handle badge events sent from offscreen.js (these come with target 'service-worker')
+	// Handle badge events sent from offscreen.js (these come with target: 'service-worker')
 	if (message && message.target === 'service-worker' && badgeAndAudioEvents.includes(message.type)) {
 		if (typeof globalThis.badgeManager !== 'undefined' && globalThis.badgeManager && typeof globalThis.badgeManager.handleEvent === 'function') {
 			globalThis.badgeManager.handleEvent(message.type, message.data);
@@ -19,10 +19,10 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
 		sendResponse({ status: 'badge updated' });
 		return;
 	}
-	// handle other messages through the message handler
+	
+	// Handle all other messages through main handler
 	await handleMessages(message, sender, sendResponse);
 });
-
 
 async function AudioManager(addEventListener, isTownTune) {
 	// Ensure the offscreen document exists before sending message
@@ -52,8 +52,9 @@ globalThis.badgeManager = badgeManager;
 async function handleMessages(message) {
 	printDebug('[service_worker.js] handleMessages received:', message);
 	if (message.target !== 'service-worker') return;
+	
 	if (badgeAndAudioEvents.includes(message.type)) {
-		printDebug('[service_worker.js] Handling badge event:', message.type, message.data);
+		printDebug('[service_worker.js] Handling badge and audio event:', message.type, message.data);
 		// Update icon/badge in service worker
 		if (typeof globalThis.badgeManager !== 'undefined' && globalThis.badgeManager && typeof globalThis.badgeManager.handleEvent === 'function') {
 			globalThis.badgeManager.handleEvent(message.type, message.data);

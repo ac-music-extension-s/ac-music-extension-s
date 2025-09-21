@@ -2,6 +2,8 @@
 
 'use strict';
 
+import { printDebug } from './Utility.js';
+
 export function BadgeManager(addEventListener, isEnabledStart) {
 	function safeFormatHour(hour) {
 		if (typeof formatHour === 'function') return formatHour(hour);
@@ -38,7 +40,7 @@ export function BadgeManager(addEventListener, isEnabledStart) {
 	function setBadgeText(text, color = [57, 230, 0, 255]) {
 		actionApi.setBadgeText({ text });
 		actionApi.setBadgeBackgroundColor({ color });
-		console.log('[BadgeManager] setBadgeText', text);
+		printDebug('[BadgeManager] setBadgeText', text);
 	}
 
 	function setIcon(icon) {
@@ -48,105 +50,165 @@ export function BadgeManager(addEventListener, isEnabledStart) {
 		}
 		if (!icon) icon = 'sunny';
 		
-		// Determine the base path based on icon type
-		let basePath;
-		if (icon === 'kk') {
-			basePath = 'img/icons/kk';
-		} else {
-			basePath = `img/icons/status/${icon}`;
-		}
+		// Use the same getIconPaths helper to ensure consistent URL handling
+		const path = getIconPaths(icon);
 		
-		// Create the path object for all sizes
-		const path = {
-			128: `${basePath}/128.png`,
-			64: `${basePath}/64.png`,
-			32: `${basePath}/32.png`,
-		};
-		
-		console.log('[BadgeManager] setIcon called with', icon, path);
+		printDebug('[BadgeManager] setIcon called with', icon, path);
 		actionApi.setIcon({ path });
 	}
 
-	// Listen for tabAudio and other events
-	chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-		console.log('[BadgeManager] onMessage', message);
-		if (!message || message.target !== 'service-worker') return;
-		const { type, data: args } = message;
+	// Shared event handling logic used by both message listener and direct handleEvent calls
+	function processEvent(type, args, useServiceWorkerIconPaths = false) {
 		if (type === 'hourMusic') {
 			let hour = args[0];
 			let weather = args[1] || 'sunny';
-			let isHourlyChange = args[3]; // 4th argument indicates if this is a real hourly change
-			// Don't override KK mode unless this is a real hourly time change (not a settings/pause change)
-			if (lastIconType === 'kk' && !isHourlyChange) {
-				lastWeather = weather; // Update weather for later use, but don't change icon/text
-				console.log('[BadgeManager] hourMusic during KK mode (not hourly change) - updating weather but keeping KK icon');
-				return;
+			
+			if (lastIconType === 'kk') {
+				printDebug('[BadgeManager] Transitioning from KK mode back to hourly music');
 			}
-			// If this is a real hourly change, it means KK time ended, so we switch back to regular music
+			
 			badgeText = `${safeFormatHour(hour)}`;
 			if (isEnabled) updateBadgeText();
-			setIcon(weather);
+			
+			if (useServiceWorkerIconPaths) {
+				printDebug('[BadgeManager] Setting weather icon:', weather);
+				actionApi.setIcon({ path: getIconPaths(weather) }).then(() => {
+					printDebug('[BadgeManager] Weather icon set successfully to:', weather);
+				}).catch((error) => {
+					console.error('[BadgeManager] Weather icon setting failed:', error);
+				});
+			} else {
+				setIcon(weather);
+			}
 			lastWeather = weather;
 			lastIconType = 'weather';
 		} else if (type === 'kkStart') {
 			badgeText = "KK";
-			console.log('[BadgeManager] kkStart event');
+			printDebug('[BadgeManager] kkStart event');
 			if (isEnabled) updateBadgeText();
-			setIcon('kk');
+			
+			if (useServiceWorkerIconPaths) {
+				actionApi.setIcon({ path: getIconPaths('kk') }).then(() => {
+					printDebug('[BadgeManager] KK icon set successfully');
+				}).catch((error) => {
+					console.error('[BadgeManager] KK icon setting failed:', error);
+				});
+			} else {
+				setIcon('kk');
+			}
 			lastIconType = 'kk';
 		} else if (type === 'pause') {
-			let tabPause = args[0];
-			if (tabPause) {
-				isTabAudible = true;
-				setBadgeText("ll");
-			} else setBadgeText("");
-			setIcon('paused');
-			console.log('[BadgeManager] pause event, set paused icon');
+			if (useServiceWorkerIconPaths) {
+				actionApi.setBadgeText({ text: "ll" });
+				actionApi.setBadgeBackgroundColor({ color: [57, 230, 0, 255] });
+				printDebug('[BadgeManager] setBadgeText ll (pause)');
+				actionApi.setIcon({ path: getIconPaths('paused') }).then(() => {
+					printDebug('[BadgeManager] Paused icon set successfully');
+				}).catch((error) => {
+					console.error('[BadgeManager] Paused icon setting failed:', error);
+				});
+			} else {
+				let tabPause = args[0];
+				if (tabPause) {
+					isTabAudible = true;
+					setBadgeText("ll");
+				} else setBadgeText("");
+				setIcon('paused');
+				printDebug('[BadgeManager] pause event, set paused icon');
+			}
 		} else if (type === 'unpause') {
 			isTabAudible = false;
 			if (isEnabled) setBadgeText(badgeText);
-			// Restore the appropriate icon based on what was showing before pause
-			if (lastIconType === 'kk') {
-				setIcon('kk');
-				console.log('[BadgeManager] unpause event, restored KK icon');
+			
+			if (useServiceWorkerIconPaths) {
+				const iconToRestore = lastIconType === 'kk' ? 'kk' : lastWeather;
+				actionApi.setIcon({ path: getIconPaths(iconToRestore) }).then(() => {
+					printDebug(`[BadgeManager] ${lastIconType === 'kk' ? 'KK' : 'Weather'} icon restored successfully to:`, iconToRestore);
+				}).catch((error) => {
+					console.error('[BadgeManager] Icon restore failed:', error);
+				});
 			} else {
-				setIcon(lastWeather);
-				console.log('[BadgeManager] unpause event, set weather icon:', lastWeather);
+				if (lastIconType === 'kk') {
+					setIcon('kk');
+					printDebug('[BadgeManager] unpause event, restored KK icon');
+				} else {
+					setIcon(lastWeather);
+					printDebug('[BadgeManager] unpause event, set weather icon:', lastWeather);
+				}
 			}
 		} else if (type === 'musicFailed') {
 			setBadgeText("x", [230, 0, 0, 255]);
 		} else if (type === 'gameChange' || type === 'weatherChange') {
 			let hour = args[0];
 			let weather = args[1] || 'sunny';
-			// Don't override KK mode - only update weather info but keep KK icon
 			if (lastIconType === 'kk') {
-				lastWeather = weather; // Update weather for later use, but don't change icon
-				console.log('[BadgeManager] gameChange/weatherChange during KK mode - updating weather but keeping KK icon');
+				lastWeather = weather;
+				printDebug('[BadgeManager] gameChange/weatherChange during KK mode - updating weather but keeping KK icon');
 				return;
 			}
-			setIcon(weather);
+			
+			if (useServiceWorkerIconPaths) {
+				// Don't update badge text if we're paused (isTabAudible = true)
+				if (isEnabled && !isTabAudible) updateBadgeText();
+			} else {
+				if (isEnabled) updateBadgeText();
+			}
+			
+			if (useServiceWorkerIconPaths) {
+				actionApi.setIcon({ path: getIconPaths(weather) });
+			} else {
+				setIcon(weather);
+			}
 			lastWeather = weather;
-			if (isEnabled) updateBadgeText();
-			console.log('[BadgeManager] change event, set icon:', weather);
+			printDebug('[BadgeManager] change event, set icon:', weather);
 		} else if (type === 'tabAudio') {
-			// Unpause icon if audible, pause if not
 			if (args[0]) {
-				isTabAudible = false;
-				if (isEnabled) setBadgeText(badgeText);
-				if (lastIconType === 'kk') {
-					setIcon('kk');
-					console.log('[BadgeManager] tabAudio unpause event, restored KK icon');
+				isTabAudible = true;
+				if (useServiceWorkerIconPaths) {
+					actionApi.setBadgeText({ text: "ll" });
+					actionApi.setBadgeBackgroundColor({ color: [57, 230, 0, 255] });
+					actionApi.setIcon({ path: getIconPaths('paused') }).then(() => {
+						printDebug('[BadgeManager] tabAudio pause event (audible tabs detected), set paused icon with ll text successfully');
+					}).catch((error) => {
+						console.error('[BadgeManager] tabAudio paused icon failed:', error);
+					});
 				} else {
-					setIcon(lastWeather);
-					console.log('[BadgeManager] tabAudio unpause event, set weather icon:', lastWeather);
+					setBadgeText("ll");
+					setIcon('paused');
+					printDebug('[BadgeManager] tabAudio pause event (audible tabs detected), set paused icon');
 				}
 			} else {
-				isTabAudible = true;
-				setBadgeText("ll");
-				setIcon('paused');
-				console.log('[BadgeManager] tabAudio pause event, set paused icon');
+				isTabAudible = false;
+				if (isEnabled) setBadgeText(badgeText);
+				
+				if (useServiceWorkerIconPaths) {
+					const iconToRestore = lastIconType === 'kk' ? 'kk' : lastWeather;
+					actionApi.setIcon({ path: getIconPaths(iconToRestore) }).then(() => {
+						printDebug(`[BadgeManager] tabAudio unpause event (no audible tabs), restored ${lastIconType === 'kk' ? 'KK' : 'weather'} icon:`, iconToRestore);
+					}).catch((error) => {
+						console.error('[BadgeManager] tabAudio icon restore failed:', error);
+					});
+				} else {
+					if (lastIconType === 'kk') {
+						setIcon('kk');
+						printDebug('[BadgeManager] tabAudio unpause event (no audible tabs), restored KK icon');
+					} else {
+						setIcon(lastWeather);
+						printDebug('[BadgeManager] tabAudio unpause event (no audible tabs), set weather icon:', lastWeather);
+					}
+				}
 			}
 		}
+	}
+
+	// Listen for tabAudio and other events - use shared logic
+	chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+		printDebug('[BadgeManager] onMessage', message);
+		if (!message || message.target !== 'service-worker') return;
+		const { type, data: args } = message;
+		
+		// Use shared processing logic with local setIcon function
+		processEvent(type, args, false);
 	});
 
 	// Helper function to generate icon paths with proper URLs for service worker context
@@ -169,102 +231,7 @@ export function BadgeManager(addEventListener, isEnabledStart) {
 
 	// Add handleEvent method that can be called directly (for service worker context)
 	this.handleEvent = function(type, args) {
-		console.log('[BadgeManager] handleEvent called:', type, args);
-		
-		if (type === 'hourMusic') {
-			let hour = args[0];
-			let weather = args[1] || 'sunny';
-			let isHourlyChange = args[3]; // 4th argument indicates if this is a real hourly change
-			// Don't override KK mode unless this is a real hourly time change (not a settings/pause change)
-			if (lastIconType === 'kk' && !isHourlyChange) {
-				lastWeather = weather; // Update weather for later use, but don't change icon/text
-				console.log('[BadgeManager] hourMusic during KK mode (not hourly change) - updating weather but keeping KK icon');
-				return;
-			}
-			// If this is a real hourly change, it means KK time ended, so we switch back to regular music
-			badgeText = `${safeFormatHour(hour)}`;
-			if (isEnabled) updateBadgeText();
-			
-			console.log('[BadgeManager] Setting weather icon:', weather);
-			actionApi.setIcon({ path: getIconPaths(weather) }).then(() => {
-				console.log('[BadgeManager] Weather icon set successfully to:', weather);
-			}).catch((error) => {
-				console.error('[BadgeManager] Weather icon setting failed:', error);
-			});
-			lastWeather = weather;
-			lastIconType = 'weather';
-		} else if (type === 'kkStart') {
-			badgeText = "KK";
-			console.log('[BadgeManager] kkStart event');
-			if (isEnabled) updateBadgeText();
-			
-			actionApi.setIcon({ path: getIconPaths('kk') }).then(() => {
-				console.log('[BadgeManager] KK icon set successfully');
-			}).catch((error) => {
-				console.error('[BadgeManager] KK icon setting failed:', error);
-			});
-			lastIconType = 'kk';
-		} else if (type === 'pause') {
-			// For pause events, always set "ll" regardless of args
-			actionApi.setBadgeText({ text: "ll" });
-			actionApi.setBadgeBackgroundColor({ color: [57, 230, 0, 255] });
-			console.log('[BadgeManager] setBadgeText ll (pause)');
-			
-			actionApi.setIcon({ path: getIconPaths('paused') }).then(() => {
-				console.log('[BadgeManager] Paused icon set successfully');
-			}).catch((error) => {
-				console.error('[BadgeManager] Paused icon setting failed:', error);
-			});
-		} else if (type === 'unpause') {
-			isTabAudible = false;
-			if (isEnabled) setBadgeText(badgeText);
-			
-			// Restore the appropriate icon based on what was showing before pause
-			const iconToRestore = lastIconType === 'kk' ? 'kk' : lastWeather;
-			actionApi.setIcon({ path: getIconPaths(iconToRestore) }).then(() => {
-				console.log(`[BadgeManager] ${lastIconType === 'kk' ? 'KK' : 'Weather'} icon restored successfully to:`, iconToRestore);
-			}).catch((error) => {
-				console.error('[BadgeManager] Icon restore failed:', error);
-			});
-		} else if (type === 'musicFailed') {
-			setBadgeText("x", [230, 0, 0, 255]);
-		} else if (type === 'gameChange' || type === 'weatherChange') {
-			let hour = args[0];
-			let weather = args[1] || 'sunny';
-			// Don't override KK mode - only update weather info but keep KK icon
-			if (lastIconType === 'kk') {
-				lastWeather = weather; // Update weather for later use, but don't change icon
-				console.log('[BadgeManager] gameChange/weatherChange during KK mode - updating weather but keeping KK icon');
-				return;
-			}
-			setIcon(weather);
-			lastWeather = weather;
-			// Don't update badge text if we're paused (isTabAudible = true)
-			if (isEnabled && !isTabAudible) updateBadgeText();
-			console.log('[BadgeManager] change event, set icon:', weather);
-		} else if (type === 'tabAudio') {
-			if (args[0]) {
-				isTabAudible = false;
-				if (isEnabled) setBadgeText(badgeText);
-				
-				const iconToRestore = lastIconType === 'kk' ? 'kk' : lastWeather;
-				actionApi.setIcon({ path: getIconPaths(iconToRestore) }).then(() => {
-					console.log(`[BadgeManager] tabAudio unpause event, restored ${lastIconType === 'kk' ? 'KK' : 'weather'} icon:`, iconToRestore);
-				}).catch((error) => {
-					console.error('[BadgeManager] tabAudio icon restore failed:', error);
-				});
-			} else {
-				isTabAudible = true;
-				// Use actionApi directly to bypass updateBadgeText logic
-				actionApi.setBadgeText({ text: "ll" });
-				actionApi.setBadgeBackgroundColor({ color: [57, 230, 0, 255] });
-				
-				actionApi.setIcon({ path: getIconPaths('paused') }).then(() => {
-					console.log('[BadgeManager] tabAudio pause event, set paused icon with ll text successfully');
-				}).catch((error) => {
-					console.error('[BadgeManager] tabAudio paused icon failed:', error);
-				});
-			}
-		}
+		printDebug('[BadgeManager] handleEvent called:', type, args);
+		processEvent(type, args, true);
 	};
 }

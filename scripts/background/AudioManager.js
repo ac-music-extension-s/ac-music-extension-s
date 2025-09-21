@@ -13,7 +13,7 @@ export function AudioManager(addEventListener, isTownTune, notifyListenersArg) {
 
 	const notify = notifyListenersArg;
 
-	// if eventsEnabled is true, plays event music when appliccable.
+	// if eventsEnabled is true, plays event music when applicable.
 	// Only enable after all game's music-folders contain one .ogg sound file for each event
 	// (i.e. "halloween.ogg" in newLeaf, AC,)
 	// Should also be used for disabling event music for those who have turned them off in the settings, then this  should be false.
@@ -37,7 +37,6 @@ export function AudioManager(addEventListener, isTownTune, notifyListenersArg) {
 	let townTunePlaying = false;
 
 	let setVolumeValue;
-	let tabAudible = false;
 	let reduceVolumeValue = 0;
 	let reducedVolume = false;
 	let tabAudioPaused = false;
@@ -46,16 +45,15 @@ export function AudioManager(addEventListener, isTownTune, notifyListenersArg) {
 	// isHourChange is true if it's an actual hour change,
 	// false if we're activating music in the middle of an hour
 	function playHourlyMusic(hour, weather, game, isHourChange) {
-		printDebug('[AudioManager] playHourlyMusic called with arguments:', arguments.length, hour, weather, game, isHourChange);
 		clearLoop();
 		audio.loop = true;
 		audio.removeEventListener("ended", playKKSong);
-
+		
 		let isWeatherChange = (previousWeather && !(previousWeather == weather));
 		let noGameChange = previousGame && (previousGame == game)
 		let noOtherChangesWeather = (noGameChange && !(isHourChange));
 		let noOtherChangesHour = (noGameChange && !(isWeatherChange));
-
+		
 		if (isWeatherChange && noOtherChangesWeather) {
 			previousWeather = weather;
 			previousGame = game;
@@ -173,6 +171,7 @@ export function AudioManager(addEventListener, isTownTune, notifyListenersArg) {
 	}
 
 	function playKKMusic(_kkVersion) {
+		printDebug('[AudioManager] playKKMusic called with version:', _kkVersion);
 		kkVersion = _kkVersion;
 		clearLoop();
 		audio.loop = false;
@@ -180,8 +179,6 @@ export function AudioManager(addEventListener, isTownTune, notifyListenersArg) {
 		audio.onpause = onPause;
 		audio.addEventListener("ended", playKKSong);
 		fadeOutAudio(500, playKKSong);
-
-		notify("kkStart", [_kkVersion]);
 
 		checkMediaSessionSupport(() => {
 			navigator.mediaSession.setActionHandler('nexttrack', playKKSong);
@@ -191,6 +188,7 @@ export function AudioManager(addEventListener, isTownTune, notifyListenersArg) {
 	function playKKSong() {
 		audio.onpause = null;
 
+		// Use chrome.storage directly (not .sync) in offscreen context
 		const storage = (typeof chrome !== 'undefined' && chrome.storage) ? chrome.storage : null;
 		const getStorage = storage && storage.sync ? storage.sync : (storage && storage.local ? storage.local : null);
 		(getStorage || { get: (o, cb) => cb({ kkSelectedSongsEnable: false, kkSelectedSongs: [] }) }).get({
@@ -262,7 +260,7 @@ export function AudioManager(addEventListener, isTownTune, notifyListenersArg) {
 		else {
 			notify("pause", [tabAudioPaused]);
 			if (killLoopTimeout) killLoopTimeout();
-			if (!tabAudioPaused) chrome.storage.local.set("paused", "true");
+			if (!tabAudioPaused) chrome.storage.local.set({"paused": "true"});
 		}
 	}
 
@@ -276,10 +274,19 @@ export function AudioManager(addEventListener, isTownTune, notifyListenersArg) {
 		audio.volume = newVolume;
 	}
 
-    addEventListener("hourMusic", playHourlyMusic);
-    addEventListener("kkStart", playKKMusic);
-    addEventListener("gameChange", playHourlyMusic);
-    addEventListener("weatherChange", playHourlyMusic);
+	addEventListener("hourMusic", (hour, weather, game, isHourChange) => {
+		printDebug('[AudioManager] hourMusic event received:', hour, weather, game, isHourChange);
+		playHourlyMusic(hour, weather, game, isHourChange);
+	});
+
+	addEventListener("kkStart", (_kkVersion) => {
+		printDebug('[AudioManager] kkStart event received:', _kkVersion);
+		playKKMusic(_kkVersion);
+	});
+
+	addEventListener("gameChange", playHourlyMusic);
+
+	addEventListener("weatherChange", playHourlyMusic);
 
 	addEventListener("pause", () => {
 		clearLoop();
@@ -294,8 +301,8 @@ export function AudioManager(addEventListener, isTownTune, notifyListenersArg) {
 
 	// If a tab starts or stops playing audio
 	addEventListener("tabAudio", (audible, tabAudio, reduceValue) => {
+		printDebug('[AudioManager] tabAudio event received:', audible, tabAudio, reduceValue);
 		if (audible != null) {
-			tabAudible = audible;
 
 			// Handles all cases except for an options switch.
 			if (tabAudio == 'pause') {
@@ -312,7 +319,18 @@ export function AudioManager(addEventListener, isTownTune, notifyListenersArg) {
 				}
 			}
 
-			// Handle volume reduction
+			// Handle play case when audible is true and tabAudio is 'play'
+			if (tabAudio == 'play' && audible && audio.paused) {
+				printDebug('[AudioManager] Play case: unpausing audio');
+				if (audio.readyState >= 3 || audio.readyState == 0) {
+					if (!townTunePlaying) {
+						audio.play();
+						tabAudioPaused = false;
+						notify("unpause");
+					}
+				}
+			}
+
 			if (tabAudio == 'reduce') {
 				if (audible) {
 					reduceVolumeValue = reduceValue;
@@ -323,21 +341,6 @@ export function AudioManager(addEventListener, isTownTune, notifyListenersArg) {
 					setVolume();
 				}
 			}
-		} else if (tabAudible) {
-			// Handles when the options are switched. Disables the previous option and enables the new one.
-			// Only runs when tab is audible.
-
-			if (audio.paused && tabAudio != 'pause') {
-				audio.play();
-				tabAudioPaused = false;
-				notify("unpause");
-				notify("tabAudio", [true, tabAudio, reduceValue]);
-			} else if (reducedVolume && tabAudio != 'reduce') {
-				reducedVolume = false;
-				setVolume();
-				notify("tabAudio", [true, tabAudio, reduceValue]);
-			} else if (tabAudio == 'pause' && audio.pause && !tabAudioPaused) notify("tabAudio", [true, tabAudio, reduceValue]);
-			else if (!reducedVolume && tabAudio == 'reduce') notify("tabAudio", [true, tabAudio, reduceValue]);
 		}
 	});
 
