@@ -44,6 +44,7 @@ export function StateManager() {
 		return options[option];
 	};
 
+	let tabAudioCallbackRegistered = false;
 	this.activate = function () {
 		printDebug("Activating StateManager");
 
@@ -56,44 +57,34 @@ export function StateManager() {
 				weatherManager.registerChangeCallback(() => {
 					if (!isKK() && isLive()) {
 						let musicAndWeather = getMusicAndWeather();
-
 						// Sends a different event on startup to get the "hourMusic" desktop notification.
 						if (startup) {
-							notifyListeners("hourMusic", [timeKeeper.getHour(), musicAndWeather.weather, musicAndWeather.music, false]);
+							printDebug("[StateManager] Sending hourMusic event", timeKeeper.getHour(), musicAndWeather.weather, musicAndWeather.music, false);
+							notifyListeners("hourMusic", [timeKeeper.getHour(), musicAndWeather.weather, musicAndWeather.music, false], callbacks, options);
 							startup = false;
-						} else notifyListeners("weatherChange", [timeKeeper.getHour(), musicAndWeather.weather, musicAndWeather.music, false]);
+						} else {
+							printDebug("[StateManager] Sending weatherChange event", timeKeeper.getHour(), musicAndWeather.weather, musicAndWeather.music, false);
+							notifyListeners("weatherChange", [timeKeeper.getHour(), musicAndWeather.weather, musicAndWeather.music, false], callbacks, options);
+						}
 					}
 				});
 			}
-
-			notifyListeners("volume", [options.volume]);
-			if (isKK()) notifyListeners("kkStart", [options.kkVersion]);
+			notifyListeners("volume", [options.volume], callbacks, options);
+			if (isKK()) notifyListeners("kkStart", [options.kkVersion], callbacks, options);
 			else {
 				let musicAndWeather = getMusicAndWeather();
-				if (musicAndWeather.weather) notifyListeners("hourMusic", [timeKeeper.getHour(), musicAndWeather.weather, musicAndWeather.music, false]);
+				if (musicAndWeather.weather) notifyListeners("hourMusic", [timeKeeper.getHour(), musicAndWeather.weather, musicAndWeather.music, false], callbacks, options);
 			}
-
-			if (!tabAudio.activated) tabAudio.activate();
-			else tabAudio.checkTabs(true);
+			if (!tabAudioCallbackRegistered) {
+				tabAudio.registerCallback(audible => {
+					notifyListeners("tabAudio", [audible, options.tabAudio, options.tabAudioReduceValue], callbacks, options);
+				});
+				tabAudioCallbackRegistered = true;
+			} else {
+				tabAudio.checkTabs(true);
+			}
 		});
 	};
-
-	// Possible events include:
-	// volume, kkStart, hourMusic, gameChange, weatherChange, pause, tabAudio, musicFailed
-	function notifyListeners(event, args) {
-		if (!options.paused || event === "pause" || event === "volume") {
-			var callbackArr = callbacks[event] || [];
-			for (var i = 0; i < callbackArr.length; i++) {
-				//callbackArr[i].apply(window, args);
-				chrome.runtime.sendMessage({
-					"type": event,
-					"target": "service-worker",
-					"data": args
-				})
-			}
-			printDebug("Notified listeners of " + event + " with args: " + args);
-		}
-	}
 
 	function isKK() {
 		return options.alwaysKK || (options.enableKK && isKKTime);
@@ -136,9 +127,9 @@ export function StateManager() {
 				items.paused = localItems.paused === true;
 				items.volume = (localItems.volume >= 0 && localItems.volume !== null) ? localItems.volume : 0.5;
 				items.townTuneVolume = (localItems.townTuneVolume >= 0 && localItems.townTuneVolume !== null) ? localItems.volume : 0.75;
-			})
-			options = items;
-			if (typeof callback === 'function') callback();
+				options = items;
+				if (typeof callback === 'function') callback();
+			});
 		});
 	}
 
@@ -188,10 +179,10 @@ export function StateManager() {
 	timeKeeper.registerHourlyCallback((day, hour) => {
 		let wasKK = isKK();
 		isKKTime = day == 6 && hour >= 20;
-		if (isKK() && !wasKK) notifyListeners("kkStart", [options.kkVersion]);
+		if (isKK() && !wasKK) notifyListeners("kkStart", [options.kkVersion], callbacks, options);
 		else if (!isKK()) {
 			let musicAndWeather = getMusicAndWeather();
-			notifyListeners("hourMusic", [hour, musicAndWeather.weather, musicAndWeather.music, true]);
+			notifyListeners("hourMusic", [hour, musicAndWeather.weather, musicAndWeather.music, true], callbacks, options);
 			// Play hourly tune when paused, but only if town tune is enabled
 			if (options.paused && (options.absoluteTownTune && options.enableTownTune)) {
 				if (chrome.offscreen) {
@@ -226,30 +217,37 @@ export function StateManager() {
 			}
 		})
 		
-		printDebug('A data object has been updated: ', changes)
-		let wasKK = isKK();
-		let kkVersion = options.kkVersion;
-		let oldTabAudio = self.getOption("tabAudio");
-		let oldTabAudioReduce = self.getOption("tabAudioReduceValue");
-		let oldBadgeTextEnabled = self.getOption("enableBadgeText");
-		// Trigger 'options' variable update
-		getSyncedOptions(() => {
-			// Detect changes and notify corresponding listeners
-			if ('zipCode' in changes) weatherManager.setZip(changes.zipCode.newValue);
-			if ('countryCode' in changes) weatherManager.setCountry(changes.countryCode.newValue);
-			if ('volume' in changes) notifyListeners("volume", [changes.volume.newValue]);
-			if (('music' in changes || 'weather' in changes) && !isKK()) {
-				let musicAndWeather = getMusicAndWeather();
-				notifyListeners("gameChange", [timeKeeper.getHour(), musicAndWeather.weather, musicAndWeather.music]);
-			}
-			if ((isKK() && !wasKK) || (kkVersion != options.kkVersion && isKK()) || (('kkSelectedSongsEnable' in changes || 'kkSelectedSongs' in changes) && isKK())) notifyListeners("kkStart", [options.kkVersion]);
-			if (!isKK() && wasKK) {
-				let musicAndWeather = getMusicAndWeather();
-				notifyListeners("hourMusic", [timeKeeper.getHour(), musicAndWeather.weather, musicAndWeather.music, false]);
-			}
-			if (oldTabAudio != options.tabAudio || oldTabAudioReduce != options.tabAudioReduceValue) notifyListeners("tabAudio", [null, options.tabAudio, options.tabAudioReduceValue]);
-			if (oldBadgeTextEnabled != options.enableBadgeText) badgeManager.updateEnabled(options.enableBadgeText);
-		});
+		   printDebug('A data object has been updated: ', changes)
+		   let wasKK = isKK();
+		   let prevKKVersion = options.kkVersion;
+		   let oldTabAudio = self.getOption("tabAudio");
+		   let oldTabAudioReduce = self.getOption("tabAudioReduceValue");
+		   let oldBadgeTextEnabled = self.getOption("enableBadgeText");
+		   if ('volume' in changes) notifyListeners("volume", [changes.volume.newValue], callbacks, options);
+		   getSyncedOptions(() => {
+			   let nowKK = isKK();
+			   let musicAndWeather = getMusicAndWeather();
+			   // Always send gameChange with up-to-date info
+			   notifyListeners("gameChange", [timeKeeper.getHour(), musicAndWeather.weather, musicAndWeather.music], callbacks, options);
+			   if ('countryCode' in changes) weatherManager.setCountry(changes.countryCode.newValue);
+			   if ('volume' in changes) notifyListeners("volume", [changes.volume.newValue], callbacks, options);
+			   // If we just entered KK mode, or KK version changed while in KK, or KK song selection changed while in KK
+			   if ((nowKK && !wasKK) || (prevKKVersion != options.kkVersion && nowKK) || (("kkSelectedSongsEnable" in changes || "kkSelectedSongs" in changes) && nowKK)) {
+				   notifyListeners("kkStart", [options.kkVersion], callbacks, options);
+			   }
+			   // If we just left KK mode, send hourMusic
+			   if (!nowKK && wasKK) {
+				   let musicAndWeather2 = getMusicAndWeather();
+				   notifyListeners("hourMusic", [timeKeeper.getHour(), musicAndWeather2.weather, musicAndWeather2.music, false], callbacks, options);
+			   }
+			   // If music or weather changed and not in KK, send hourMusic
+			   if (("music" in changes || "weather" in changes) && !nowKK) {
+				   let musicAndWeather3 = getMusicAndWeather();
+				   notifyListeners("hourMusic", [timeKeeper.getHour(), musicAndWeather3.weather, musicAndWeather3.music, false], callbacks, options);
+			   }
+			   if (oldTabAudio != options.tabAudio || oldTabAudioReduce != options.tabAudioReduceValue) notifyListeners("tabAudio", [null, options.tabAudio, options.tabAudioReduceValue], callbacks, options);
+			   if (oldBadgeTextEnabled != options.enableBadgeText) badgeManager.updateEnabled(options.enableBadgeText);
+		   });
 	};
 	chrome.storage.onChanged.addListener(storageListener)
 	addEventListener("storage", changes => {
@@ -264,12 +262,11 @@ export function StateManager() {
 	chrome.browserAction.onClicked.addListener(toggleMusic);
 
 	// play/pause when the browser closes and the option to play in background is disabled
-	chrome.tabs.onRemoved.addListener(checkTabs);
 	chrome.tabs.onCreated.addListener(checkTabs);
 	setInterval(checkTabs, 1000);
 
 	tabAudio.registerCallback(audible => {
-		notifyListeners("tabAudio", [audible, options.tabAudio, options.tabAudioReduceValue]);
+		notifyListeners("tabAudio", [audible, options.tabAudio, options.tabAudioReduceValue], callbacks, options);
 	});
 
 	// Handle the user interactions in the media session dialogue.
@@ -281,8 +278,17 @@ export function StateManager() {
 	function toggleMusic() {
 		chrome.storage.local.set({ paused: !options.paused });
 		getSyncedOptions(() => {
-			if (options.paused) notifyListeners("pause");
-			else self.activate();
+			// options.paused is now up-to-date
+			if (options.paused) {
+				notifyListeners("pause", [], callbacks, options);
+				notifyListeners("tabAudio", [false, "pause", options.tabAudioReduceValue], callbacks, options);
+			} else {
+				notifyListeners("tabAudio", [true, "play", options.tabAudioReduceValue], callbacks, options);
+				// Also notify hourMusic to trigger playback
+				let musicAndWeather = getMusicAndWeather();
+				notifyListeners("hourMusic", [timeKeeper.getHour(), musicAndWeather.weather, musicAndWeather.music, false], callbacks, options);
+				// Do NOT call self.activate() here to avoid race/loop
+			}
 		});
 	}
 
@@ -291,7 +297,8 @@ export function StateManager() {
 			chrome.tabs.query({}, tabs => {
 				if (tabs.length == 0) {
 					if (browserClosed) return;
-					notifyListeners("pause");
+					chrome.storage.local.set({ paused: true });
+					notifyListeners("pause", [], callbacks, options);
 					browserClosed = true;
 				} else if (browserClosed) {
 					self.activate();
@@ -299,5 +306,42 @@ export function StateManager() {
 				}
 			});
 		}
+	}
+}
+
+// Possible events include:
+// volume, kkStart, hourMusic, gameChange, weatherChange, pause, tabAudio, musicFailed
+export function notifyListeners(event, args, callbacks, options) {
+	console.log('[StateManager.js] notifyListeners called:', event, args, callbacks, options);
+	if (!options || !callbacks) return; // Defensive: don't proceed if missing
+	if (!options.paused || event === "pause" || event === "volume") {
+		var callbackArr = callbacks[event] || [];
+		for (var i = 0; i < callbackArr.length; i++) {
+			//callbackArr[i].apply(window, args);
+		}
+		// Always send to both offscreen-doc and service-worker in service worker context
+		const offscreenEvents = [
+			'hourMusic', 'kkStart', 'gameChange', 'weatherChange', 'pause', 'volume', 'tabAudio'
+		];
+		const isServiceWorker = (typeof importScripts === 'function');
+		if (isServiceWorker && offscreenEvents.includes(event)) {
+			chrome.runtime.sendMessage({
+				"type": event,
+				"target": "offscreen-doc",
+				"data": args
+			});
+			// Directly update badge in service worker
+			if (typeof globalThis.badgeManager !== 'undefined' && globalThis.badgeManager && typeof globalThis.badgeManager.handleEvent === 'function') {
+				globalThis.badgeManager.handleEvent(event, args);
+			}
+		} else {
+			console.log('[StateManager.js] Sending message to service-worker:', event, args);
+			chrome.runtime.sendMessage({
+				"type": event,
+				"target": "service-worker",
+				"data": args
+			});
+		}
+		printDebug("Notified listeners of " + event + " with args: " + args);
 	}
 }

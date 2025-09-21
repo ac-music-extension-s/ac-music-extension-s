@@ -1,6 +1,6 @@
 // Handles notifications
-
 'use strict';
+import { formatHour } from './Utility.js';
 
 export function NotificationManager(addEventListener, isEnabled) {
 	function doNotification(message, icon = 'clock') {

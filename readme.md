@@ -81,6 +81,19 @@ If you're still having trouble, also try:
 
 Although, feel free to jump into the project's [Discord server](https://discord.gg/4FMrEF8) anyway - it's not a very active server, but it's a nice little community. (And, of course, you can find me there.)
 
+## Development Setup
+To set up the build environment:
+
+1. **Install Node.js and npm**: Download from [nodejs.org](https://nodejs.org) if you don't already have them installed.
+2. **Install dependencies**: `npm install`
+3. **Bundle the extension**: `npx rollup -c`
+
+### When to rebuild
+Rollup bundles the offscreen document into `offscreen.bundle.js`. Re-run `npx rollup -c` whenever you:
+- Modify any JavaScript files in the `scripts/` directory
+- Change `offscreen.js`
+- Make any other JavaScript changes
+
 ## Contribute
 Contributions to the project are **greatly** appreciated! Here is how you can help to make this project even better:
 
