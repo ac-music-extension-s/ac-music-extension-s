@@ -1,7 +1,7 @@
 // Globally accessible helper functions
 'use strict';
 // Enable this to get debug logs, disabled for production
-export var DEBUG_FLAG = true;
+export var DEBUG_FLAG = false;
 
 // Returns a hour-formatted string of a time
 export function formatHour(time) {
