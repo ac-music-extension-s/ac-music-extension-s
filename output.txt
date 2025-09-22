@@ -1,0 +1,6 @@
+
+> ac-music-extension-s@1.1.0 lint
+> prettier --check . --write . && eslint . --ext .js --config eslint.config.js --fix
+
+Checking formatting...
+All matched files use Prettier code style!

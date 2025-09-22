@@ -1,46 +1,81 @@
-$(function() {
-  var body = $('body');
-  $('.menu a').click(function(ev) {
-    ev.preventDefault();
-    var selected = 'selected';
+document.addEventListener('DOMContentLoaded', function () {
+	document.querySelectorAll('.menu a').forEach(function (menuLink) {
+		menuLink.addEventListener('click', function (ev) {
+			ev.preventDefault();
+			var selected = 'selected';
 
-    $('.mainview > *, .menu li').removeClass(selected);
-    setTimeout(function() {
-      $('.mainview > *').not('.selected').css('display', 'none');
-    }, 100);
+			document
+				.querySelectorAll('.mainview > *, .menu li')
+				.forEach(function (el) {
+					el.classList.remove(selected);
+				});
 
-    $(ev.currentTarget).parent().addClass(selected);
-    var currentView = $($(ev.currentTarget).attr('href')).css('display', 'block');
-    setTimeout(function() {
-      currentView.addClass(selected);
-    }, 0);
+			setTimeout(function () {
+				document.querySelectorAll('.mainview > *').forEach(function (el) {
+					if (!el.classList.contains('selected')) {
+						el.style.display = 'none';
+					}
+				});
+			}, 100);
 
-    setTimeout(function() {
-      body[0].scrollTop = 0;
-    }, 200);
-  });
+			ev.currentTarget.parentElement.classList.add(selected);
 
-  $('#launch_modal').click(function(ev) {
-    ev.preventDefault();
-    var modal = $('.overlay').clone();
-    var modalPage = modal.find('.page');
-    modal.removeAttr('style').find('button, .close-button').click(function() {
-      modal.addClass('transparent');
-      setTimeout(function() {
-        modal.remove();
-      }, 1000);
-    });
+			var currentView = document.querySelector(
+				ev.currentTarget.getAttribute('href')
+			);
+			currentView.style.display = 'block';
+			setTimeout(function () {
+				currentView.classList.add(selected);
+			}, 0);
 
-    modal.click(function() {
-      modalPage.addClass('pulse').on('webkitAnimationEnd', function() {
-        $(this).removeClass('pulse');
-      });
-    });
-    modalPage.click(function(ev) {
-      ev.stopPropagation();
-    });
-    body.append(modal);
-  });
-  
-  $('.mainview > *').not('.selected').css('display', 'none');
+			setTimeout(function () {
+				document.documentElement.scrollTop = 0;
+			}, 200);
+		});
+	});
+
+	// document
+	// 	.getElementById('tabAudioModal')
+	// 	.addEventListener('click', function (ev) {
+	// 		ev.preventDefault();
+	// 		var overlay = document.querySelector('.overlay');
+	// 		var modal = overlay.cloneNode(true);
+	// 		var modalPage = modal.querySelector('.page');
+
+	// 		modal.removeAttribute('style');
+
+	// 		modal
+	// 			.querySelectorAll('button, .close-button')
+	// 			.forEach(function (button) {
+	// 				button.addEventListener('click', function () {
+	// 					modal.classList.add('transparent');
+	// 					setTimeout(function () {
+	// 						modal.remove();
+	// 					}, 1000);
+	// 				});
+	// 			});
+
+	// 		modal.addEventListener('click', function () {
+	// 			modalPage.classList.add('pulse');
+	// 			modalPage.addEventListener(
+	// 				'animationend',
+	// 				function handleAnimationEnd() {
+	// 					modalPage.classList.remove('pulse');
+	// 					modalPage.removeEventListener('animationend', handleAnimationEnd);
+	// 				}
+	// 			);
+	// 		});
+
+	// 		modalPage.addEventListener('click', function (ev) {
+	// 			ev.stopPropagation();
+	// 		});
+
+	// 		document.body.appendChild(modal);
+	// 	});
+
+	document.querySelectorAll('.mainview > *').forEach(function (el) {
+		if (!el.classList.contains('selected')) {
+			el.style.display = 'none';
+		}
+	});
 });

@@ -1,198 +1,199 @@
 .chrome-bootstrap .help-link {
-    margin-top: 27px;
+	margin-top: 27px;
 }
 
 .chrome-bootstrap .image-container {
-    margin-top: 10px;
-    margin-bottom: 16px;
+	margin-top: 10px;
+	margin-bottom: 16px;
 }
 
-.chrome-bootstrap .image-container>img {
-    float: left;
+.chrome-bootstrap .image-container > img {
+	float: left;
 }
 
 .chrome-bootstrap .image-container-text {
-    margin-left: 64px;
+	margin-left: 64px;
 }
 
 .chrome-bootstrap .image-container-text h2 {
-    margin-bottom: 5px;
-    font-size: 1.3em;
+	margin-bottom: 5px;
+	font-size: 1.3em;
 }
 
 .exclamation {
-    background-color: #595959;
-    color: white !important;
-    font-size: 11px !important;
-    text-decoration: none !important;
-    padding: 2px 6px;
-    border-radius: 10px;
+	background-color: #595959;
+	color: white !important;
+	font-size: 11px !important;
+	text-decoration: none !important;
+	padding: 2px 6px;
+	border-radius: 10px;
 }
 
 #contributors-failed {
-    display: none;
-    color: red;
+	display: none;
+	color: red;
 }
 
 #contributors-table {
-    vertical-align: top;
+	vertical-align: top;
 }
 
 table {
-    table-layout: fixed;
-    border-collapse: collapse;
-    width: 100%;
+	table-layout: fixed;
+	border-collapse: collapse;
+	width: 100%;
 }
 
 td {
-    border: 1px solid #dddddd;
-    text-align: center;
-    padding: 8px;
+	border: 1px solid #dddddd;
+	text-align: center;
+	padding: 8px;
 }
 
 .contributorLink {
-    text-decoration: none !important;
+	text-decoration: none !important;
 }
 
-.contributor>p {
-    text-align: center !important;
-    margin: 6px 0 0 0;
+.contributor > p {
+	text-align: center !important;
+	margin: 6px 0 0 0;
 }
 
-.contributor>img:first-child {
-    width: 100%;
+.contributor > img:first-child {
+	width: 100%;
 }
 
-.contributorLink>img {
-    width: 12px;
-    vertical-align: middle;
+.contributorLink > img {
+	width: 12px;
+	vertical-align: middle;
 }
 
 .githubIcon {
-    padding-right: 3px;
-    margin-bottom: 2px;
+	padding-right: 3px;
+	margin-bottom: 2px;
 }
 
 .discordIcon {
-    padding-right: 2px;
+	padding-right: 2px;
 }
 
 #tab-audio-reduce-value {
-    width: 45px;
-    font-size: 11px;
+	width: 45px;
+	font-size: 11px;
 }
 
 .modal {
-    display: none;
-    position: fixed;
-    z-index: 5;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    overflow: auto;
-    background-color: rgb(0,0,0);
-    background-color: rgba(0,0,0,0.4);
+	display: none;
+	position: fixed;
+	z-index: 5;
+	left: 0;
+	top: 0;
+	width: 100%;
+	height: 100%;
+	overflow: auto;
+	background-color: rgb(0, 0, 0);
+	background-color: rgba(0, 0, 0, 0.4);
 }
 
 .modal-content {
-    background-color: #fefefe;
-    margin: 15% auto;
-    padding: 20px;
-    border: 1px solid #888;
-    width: 50%;
+	background-color: #fefefe;
+	margin: 15% auto;
+	padding: 20px;
+	border: 1px solid #888;
+	width: 50%;
 }
 
 #modal-title {
-    font-weight: bold;
-    font-size: 18px;
+	font-weight: bold;
+	font-size: 18px;
 }
 
 section > p:first-of-type {
-    margin: 6px 0;
+	margin: 6px 0;
 }
 
 section > h4 {
-    margin-top: 10px;
+	margin-top: 10px;
 }
 
-h3, h4 {
-    font-weight: bold !important;
+h3,
+h4 {
+	font-weight: bold !important;
 }
 
 @keyframes scrolled {
-    0% {
-        background-color: inherit;
-    }
+	0% {
+		background-color: inherit;
+	}
 
-    50% {
-        background-color: rgb(102, 255, 156);
-    }
+	50% {
+		background-color: rgb(102, 255, 156);
+	}
 
-    100% {
-        background-color: inherit;
-    }
+	100% {
+		background-color: inherit;
+	}
 }
-
 
 .nav-button {
-    padding: 7px 0 35px 0;
-    width: 100%;
+	padding: 7px 0 35px 0;
+	width: 100%;
 }
 
-.nav-button>img {
-    width:50%;
+.nav-button > img {
+	width: 50%;
 }
 
-.changelog-list, .changelog-list>li {
-    list-style-type: disc !important;
+.changelog-list,
+.changelog-list > li {
+	list-style-type: disc !important;
 }
 
-.changelog-list>li {
-    padding: 4px 0;
+.changelog-list > li {
+	padding: 4px 0;
 }
 
 .changelog-list {
-    padding: 0 40px !important;
+	padding: 0 40px !important;
 }
 
 .changelog-date {
-    color: gray;
-    font-weight: normal;
+	color: gray;
+	font-weight: normal;
 }
 
-#contributors-container{
-    width: 60vw;
-    display: grid;
-    grid-template-columns: repeat(4, 20vmin);
-    margin: 20px 5px;
-    grid-gap: 0px;
-    align-items: stretch;
+#contributors-container {
+	width: 60vw;
+	display: grid;
+	grid-template-columns: repeat(4, 20vmin);
+	margin: 20px 5px;
+	grid-gap: 0px;
+	align-items: stretch;
 }
 
 .contributor {
-    text-align: center;
-    border: 1px solid #dddddd;
-    padding: 8px;
+	text-align: center;
+	border: 1px solid #dddddd;
+	padding: 8px;
 }
 
-.icon-grid{
-    width:80%;
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0px, 60px));
-    margin: 20px 5px;
-    grid-gap: 5px;
-
+.icon-grid {
+	width: 80%;
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0px, 60px));
+	margin: 20px 5px;
+	grid-gap: 5px;
 }
 
-.icon-grid div{
-    text-align: center;
+.icon-grid div {
+	text-align: center;
 }
 
-.navigation h1{
-    color: #5C6166;
+.navigation h1 {
+	color: #5c6166;
 }
 
 .chrome-bootstrap select[multiple] {
-    background-image: none, linear-gradient(#ededed, #ededed 38%, #dedede) !important;
+	background-image:
+		none, linear-gradient(#ededed, #ededed 38%, #dedede) !important;
 }

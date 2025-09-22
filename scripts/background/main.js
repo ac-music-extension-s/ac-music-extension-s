@@ -1,15 +1,19 @@
 'use strict';
 
-(function() {
-	
+(function () {
 	var stateManager = new StateManager();
-	var audioManager = new AudioManager(stateManager.registerCallback, function() {
-		return stateManager.getOption("enableTownTune");
-	});
-	var notificationManager = new NotificationManager(stateManager.registerCallback, function() {
-		return stateManager.getOption("enableNotifications");
-	});
-	
+	// var audioManager = new AudioManager(
+	// 	stateManager.registerCallback,
+	// 	function () {
+	// 		return stateManager.getOption('enableTownTune');
+	// 	}
+	// );
+	// var notificationManager = new NotificationManager(
+	// 	stateManager.registerCallback,
+	// 	function () {
+	// 		return stateManager.getOption('enableNotifications');
+	// 	}
+	// );
+
 	stateManager.activate();
-	
 })();
