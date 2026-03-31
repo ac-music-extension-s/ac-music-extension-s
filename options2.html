@@ -1,0 +1,265 @@
+<!doctype html>
+<head>
+    <meta charset="utf-8">
+    <title>Animal Crossing Music (T4 Var.) - Options</title>
+    <link rel="stylesheet" href="https://unpkg.com/7.css">
+    <script src="scripts/options/zepto.min.js"></script>
+    <script src="scripts/global/tune_player.js"></script>
+    <script src="scripts/options/tune_editor.js"></script>
+    <script src="scripts/background/KKSongs.js"></script>
+    <script src="scripts/options/options.js"></script>
+    <script src="scripts/options/weather_api.js"></script>
+    <script src="scripts/options/options2.js"></script>
+</head>
+<style>
+    .green-tea::before,
+    .green-tea > .title-bar {
+        background-color: #a6d388;
+    }
+</style>
+<body class="win7">
+    <div class="window green-tea" style="max-height: 99%;">
+        <div class="title-bar">
+            <div class="title-bar-text">Animal Crossing Music (T4 Variant) <span id="version-number"></span></div>
+        </div>
+        <div class="window-body has-space">
+            <menu role="tablist" aria-label="Tabs">
+                <button role="tab" aria-controls="main" aria-selected="true">Options</button>
+                <button role="tab" aria-controls="town-tune">Town Tune Editor</button>
+                <button role="tab" aria-controls="weather">WeatherAPI Settings</button>
+            </menu>
+            <article role="tabpanel" id="main" class="has-scrollbar">
+                <fieldset>
+                    <legend><b>Volume</b></legend>
+                    <p>Set the extension's volume.</p>
+                    <input type="range" id="volume" min="0" max="1" step="0.01">
+                    <span id="volumeText"></span>
+                </fieldset>
+                <fieldset id="music-selection" style="display: inline-block">
+                    <legend><b>Music</b></legend>
+                    <p>Select which game's music you wish to listen to.</p>
+                    <div>
+                        <input id="animal-crossing" name="music-choice" type="radio"><label for="animal-crossing"><span><span></span></span>Animal Forest/Animal Crossing</label>
+                    </div>
+                    <div class="radio">
+                        <input id="wild-world" name="music-choice" type="radio"><label
+                            for="wild-world"><span><span></span></span>Wild World/City Folk/Let's Go to the
+                            City</label>
+                    </div>
+                    <div class="radio">
+                        <input id="new-leaf" name="music-choice" type="radio"><label
+                            for="new-leaf"><span><span></span></span>New Leaf</label>
+                    </div>
+                    <div class="radio">
+                        <input id="new-horizons" name="music-choice" type="radio"><label for="new-horizons"><span><span></span></span>New Horizons</label>
+                    </div>
+                    <div class="radio">
+                        <input id="game-random" name="music-choice" type="radio"><label for="game-random"><span><span></span></span>Random!</label>
+                    </div>
+                </fieldset>
+                <fieldset id="weather-selection" style="display: inline-block">
+                    <legend><b>Weather</b></legend>
+                    <p>Select the weather variation you wish to listen to</p>
+                    <div class="radio">
+                        <input id="sunny" name="weather-choice" type="radio"><label
+                            for="sunny"><span><span></span></span>Sunny/Normal</label>
+                    </div>
+                    <div class="radio">
+                        <input id="snowing" name="weather-choice" type="radio"><label
+                            for="snowing"><span><span></span></span>Snowing</label>
+                    </div>
+                    <div class="radio">
+                        <input id="raining" name="weather-choice" type="radio"><label
+                            for="raining"><span><span></span></span>Raining</label>
+                    </div>
+                    <div class="radio">
+                        <input id="live" name="weather-choice" type="radio"><label
+                            for="live"><span><span></span></span>Live Weather</label>
+                    </div>
+                    <div class="radio">
+                        <input id="weather-random" name="weather-choice" type="radio"><label
+                            for="weather-random"><span><span></span></span>Random!</label>
+                    </div>
+                </fieldset>
+                <fieldset id="kk">
+                    <legend><b>K.K. Slider</b></legend>
+                    <p>Customize K.K. Slider's behaviour</p>
+                    <fieldset style="display: inline-block;">
+                        <legend>Play Times</legend>
+                        <div class="radio">
+                            <input id="no-kk" name="enable-kk" type="radio"><label
+                                for="no-kk"><span><span></span></span>Do not play K.K. Slider songs</label>
+                        </div>
+                        <div class="radio">
+                            <input id="enable-kk" name="enable-kk" type="radio"><label
+                                for="enable-kk"><span><span></span></span>Play K.K. Slider songs on Saturdays from
+                                8pm&ndash;12am</label>
+                        </div>
+                        <div class="radio">
+                            <input id="always-kk" name="enable-kk" type="radio"><label
+                                for="always-kk"><span><span></span></span>Play K.K. Slider songs at all times</label>
+                        </div>
+                    </fieldset>
+                    <fieldset id="kk-version-selection" style="display:inline-block;">
+                        <legend>Version Choice</legend>
+                        <div class="radio">
+							<input id="kk-version-live" name="kk-version" type="radio"><label
+								for="kk-version-live"><span><span></span></span>Live</label>
+						</div>
+						<div class="radio">
+							<input id="kk-version-aircheck" name="kk-version" type="radio"><label
+								for="kk-version-aircheck"><span><span></span></span>Aircheck</label>
+						</div>
+						<div class="radio">
+							<input id="kk-version-both" name="kk-version" type="radio"><label
+								for="kk-version-both"><span><span></span></span>Both</label>
+						</div>
+                    </fieldset>
+                    <fieldset>
+                        <legend>Song Selection</legend>
+                        <div class="checkbox">
+							<input id="kk-songs-selection-enable" type="checkbox"><label for="kk-songs-selection-enable"><span></span>Only play the selected K.K. songs</label>
+						</div>
+						<select id="kk-songs-selection" multiple></select>
+						<label for="kk-songs-selection" style="display: block"><b>Strg/Cmd + Click</b> for mutliple selection</label>
+                    </fieldset>
+                </fieldset>
+                <fieldset id="towntune" style="display:inline-block">
+                    <legend><b>Town Tune</b></legend>
+                    <p>Customize your town tune's behaviour.</p>
+                    <div class="checkbox">
+                        <input id="enable-town-tune" type="checkbox"><label for="enable-town-tune"><span></span>Play
+                            your custom town tune on the hour</label>
+                    </div>
+                    <div class="checkbox">
+                        <input id="absolute-town-tune" type="checkbox"><label
+                            for="absolute-town-tune"><span></span>Play your custom town tune regardless if the music
+                            is paused</label>
+                    </div>
+                </fieldset>
+                <fieldset id="tab-audio-behaviour" style="display:inline-block">
+                    <legend><b>Tab Audio Behaviour</b></legend>
+                    <p>Control what the extension does while a tab is playing audio</p>
+                    <div class="radio">
+                        <input id="tab-audio-reduce" name="tab-audio" type="radio"><label for="tab-audio-reduce"><span><span></span></span>Reduce the extension's music by</label>
+                            <input id="tab-audio-reduce-value" name="tab-audio" type="number" max="100"
+                                min="0">%</label>
+                    </div>
+                    <div class="radio">
+                        <input id="tab-audio-pause" name="tab-audio" type="radio"><label
+                            for="tab-audio-pause"><span><span></span></span>Pause the extension's music</label>
+                    </div>
+                    <div class="radio">
+                        <input id="tab-audio-nothing" name="tab-audio" type="radio"><label
+                            for="tab-audio-nothing"><span><span></span></span>Do nothing</label>
+                    </div>
+                </fieldset>
+                <fieldset>
+                    <legend><b>Other</b></legend>
+                    <p>Other various options that don't fit in any other category</p>
+						<div class="checkbox">
+							<input id="enable-notifications" type="checkbox"><label
+								for="enable-notifications"><span></span>Enable notifications on song
+								change</label>
+						</div>
+
+						<div class="checkbox">
+							<input id="enable-badge" type="checkbox"><label for="enable-badge"><span></span>Display text
+								on badge</label>
+						</div>
+
+						<div class="checkbox">
+							<input id="enable-background" type="checkbox"><label for="enable-background"><span></span>
+								Allow for music to play when the browser is closed.</label> 
+								<i>Background apps must also be enabled in your browser settings.</i>
+						</div>
+                </fieldset>
+            </article>
+            <article role="tabpanel" id="town-tune" hidden>
+                <p>Compose a tune to be played every hour on the hour</p>
+                <div class="pitch-template is-vertical" hidden>
+                    <input class="pitch-name" type="text" maxlength="2" size="2" hidden>
+                    <input class="pitch-slider" type="range" min="0" max="16" step="1" orient="vertical" hidden>
+                </div>
+                <div class="staff staff1 is-vertical"></div>
+                <div class="staff staff2 is-vertical"></div>
+                <br>
+                <fieldset>
+                    <legend>Town tune volume:</legend>
+                    <input id="townTuneVolume" type="range" min="0" max="1" step="0.01">
+					<span id="townTuneVolumeText"></span>
+                </fieldset>
+                <fieldset>
+                    <button class="play-tune">Play!</button>
+					<button class="reset-tune">Reset to Default</button>
+					<button class="randomize-tune">Randomize</button>
+					<button class="save-tune">Save</button>
+                </fieldset>
+            </article>
+            <article role="tabpanel" id="weather" hidden>
+                <fieldset>
+                    <legend><b>API Key</b></legend>
+                    <p>Input your WeatherAPI key.</p>
+                    <input id="wxapi-key" value="">
+                </fieldset>
+                <fieldset>
+                    <legend><b>Location Setup</b></legend>
+                    <p>Choose a location to get weather data from. By default, the extension uses your computer's IP address (<tt>auto:ip</tt>)</p>
+                    <div class="radio">
+                        <input type="radio" id="local-ip" name="location-type"><label for="local-ip"><span><span></span></span>Use your computer's IP address</label>
+                    </div>
+                    <div class="radio">
+                        <input type="radio" id="ip-input" name="location-type"><label for="ip-input"><span><span></span></span>Use another IP address</label>
+                        <span></span>
+                        <input id="ip-address" size="15" disabled>
+                    </div>
+                    <div class="radio">
+                        <input type="radio" id="lat-lon" name="location-type"><label for="lat-lon"><span><span></span></span>Latitude, Longitude</label>
+                        <br/>
+                        <label for="latitude">Latitude:</label>
+                        <input id="latitude" type="text" size="7" disabled>
+                        <label for="longitude">Longitude:</label>
+                        <input id="longitude" type="text" size="7" disabled>
+                    </div>
+                    <div class="radio">
+                        <input type="radio" id="zip-code" name="location-type"><label for="zip-code"><span><span></span></span>US ZIP Code</label>
+                        <br/>
+                        <input id="us-zip" type="text" size="7" disabled>
+                    </div>
+                    <div class="radio">
+                        <input type="radio" id="uk-postal" name="location-type"><label for="uk-postal"><span><span></span></span>UK Postal Code</label>
+                        <br/>
+                        <input id="uk-post" type="text" size="7" disabled>
+                    </div>
+                    <div class="radio">
+                        <input type="radio" id="canada-post" name="location-type"><label for="canada-post"><span><span></span></span>Canada Postal Code</label>
+                        <br/>
+                        <input id="ca-post" type="text" size="7" disabled>
+                    </div>
+                    <div class="radio">
+                        <input type="radio" id="metar" name="location-type"><label for="metar"><span><span></span></span>METAR Code</label>
+                        <br/>
+                        <input id="metar-code" type="text" size="7" disabled>
+                    </div>
+                    <div class="radio">
+                        <input type="radio" id="iata" name="location-type"><label for="iata"><span><span></span></span>IATA Code</label>
+                        <br/>
+                        <input id="iata-code" type="text" size="7" disabled>
+                    </div>
+                    <div class="radio">
+                        <input type="radio" id="search" name="location-type"><label for="search"><span><span></span></span>Search for location</label>
+                        <br/>
+                        <input type="search" id="search-query" size="30" disabled>
+                        <button id="commit-search" disabled>Search</button>
+                    </div>
+                    <div class="radio">
+                        <input type="radio" id="last-used-search" name="location-type" disabled><label for="last-used-search"><span><span></span></span>Last used search location: N/A</label>
+                    </div>
+                </fieldset>
+                <div class="footer">
+                    <button id="save_wx_loc">Save location settings</button>
+                </div>
+            </article>
+        </div>
+    </div>
+</body>
