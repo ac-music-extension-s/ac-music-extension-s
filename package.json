@@ -1,8 +1,22 @@
 {
-  "name": "ac-music-extension-j",
-  "version": "1.1.0",
-  "description": "A browser extension that plays hourly Animal Crossing music and more while browsing!",
-  "devDependencies": {
-    "eslint": "^6.8.0"
-  }
+	"name": "ac-music-extension-s",
+	"version": "1.1.0",
+	"description": "A browser extension that plays hourly Animal Crossing music and more while browsing!",
+	"devDependencies": {
+		"@eslint/js": "^9.36.0",
+		"@rollup/plugin-commonjs": "^28.0.6",
+		"@rollup/plugin-node-resolve": "^16.0.1",
+		"eslint": "^9.36.0",
+		"eslint-config-prettier": "^10.1.8",
+		"eslint-plugin-prettier": "^5.5.4",
+		"prettier": "^3.6.2",
+		"prettier-eslint": "^16.4.2",
+		"rollup": "^4.52.0"
+	},
+	"scripts": {
+		"build": "rollup -c",
+		"lint": "prettier --check . --write . && eslint . --ext .js --config eslint.config.js --fix"
+	},
+	"type": "module",
+	"packageManager": "pnpm@10.17.0+sha512.fce8a3dd29a4ed2ec566fb53efbb04d8c44a0f05bc6f24a73046910fb9c3ce7afa35a0980500668fa3573345bd644644fa98338fa168235c80f4aa17aa17fbef"
 }

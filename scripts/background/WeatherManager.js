@@ -2,7 +2,7 @@
 
 'use strict';
 
-function WeatherManager(zip, country) {
+export function WeatherManager(zip, country) {
 	let self = this;
 
 	let timeout;
@@ -36,40 +36,29 @@ function WeatherManager(zip, country) {
 
 	// Checks the weather every 10 minutes, calls callback if it's changed
 	let weatherCheckLoop = function () {
-		let url = `https://acmusicext.com/api/weather-v1/${country}/${zip}`
-		let request = new XMLHttpRequest();
-
-		request.onload = function () {
-			if (request.status == 200 || request.status == 304) {
-				let response = JSON.parse(request.responseText);
+		let url = `https://acmusicext.com/api/weather-v1/${country}/${zip}`;
+		fetch(url)
+			.then((response) => {
+				if (response.status == 200 || response.status == 304) {
+					return response.json();
+				} else throw Error;
+			})
+			.then((response) => {
 				if (response.weather !== weather) {
 					let oldWeather = self.getWeather();
 					weather = response.weather;
-					if (weather !== oldWeather && typeof callback === 'function') callback();
+					if (weather !== oldWeather && typeof callback === 'function')
+						callback();
 				}
-			} else err();
-		}
-
-		request.onerror = err;
-
-		function err() {
-			if (!weather) {
-				weather = "Clear";
-				callback();
-			}
-		}
-
-		request.open("GET", url, true);
-		request.send();
+			})
+			.catch(() => {
+				if (!weather) {
+					weather = 'Clear';
+					callback();
+				}
+			});
 		timeout = setTimeout(weatherCheckLoop, 600000);
 	};
 
 	weatherCheckLoop();
-
-	if (DEBUG_FLAG) {
-		window.changeWeather = function (newWeather) {
-			weather = newWeather;
-			callback();
-		}
-	}
 }

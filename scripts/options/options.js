@@ -1,5 +1,8 @@
 'use strict';
 
+import { KKSongList } from '../background/KKSongs.js';
+import { DEBUG_FLAG, printDebug } from '../background/Utility.js';
+
 const onClickElements = [
 	'animal-crossing',
 	'wild-world',
@@ -24,74 +27,93 @@ const onClickElements = [
 	'tab-audio-nothing',
 	'tab-audio-reduce',
 	'tab-audio-pause',
-	'kk-songs-selection-enable'
+	'kk-songs-selection-enable',
 ];
 
 const exclamationElements = [
 	'live-weather-location-link',
-	'town-tune-button-link'
-]
+	'town-tune-button-link',
+];
 
 // Formats an integer to percentage
 function formatPercentage(number) {
-	number = parseInt(number)
-	if (number <= 0) return '0%'
-	else if (number >= 100) return '100%'
-	else return `${number}%`
+	number = parseInt(number);
+	if (number <= 0) return '0%';
+	else if (number >= 100) return '100%';
+	else return `${number}%`;
 }
 
 function containsSpace(string) {
-	return (string.indexOf(' ') >= 0);
+	return string.indexOf(' ') >= 0;
 }
 
-
-window.onload = function () {
+globalThis.onload = function () {
 	restoreOptions();
-	document.getElementById('version-number').textContent = 'Version ' + chrome.runtime.getManifest().version;
+	document.getElementById('version-number').textContent =
+		'Version ' + chrome.runtime.getManifest().version;
 	document.getElementById('volume').onchange = saveOptions;
-	document.getElementById('volume').oninput = function() {
+	document.getElementById('volume').oninput = function () {
 		let volumeText = document.getElementById('volumeText');
-		volumeText.innerText = `${formatPercentage(this.value*100)}`;
+		volumeText.innerText = `${formatPercentage(this.value * 100)}`;
+
+		const volumeValue = parseFloat(this.value);
+		chrome.runtime.sendMessage({
+			type: 'volume',
+			data: [volumeValue],
+		});
+		chrome.storage.local.set({ volume: volumeValue });
 	};
-	document.getElementById('townTuneVolume').onchange = saveOptions; // Maybe disable as to only save when clicking "save" button
-	document.getElementById('townTuneVolume').oninput = function() {
+	document.getElementById('townTuneVolume').onchange = saveOptions;
+	document.getElementById('townTuneVolume').oninput = function () {
 		let ttVolumeText = document.getElementById('townTuneVolumeText');
-		ttVolumeText.innerText = `${formatPercentage(this.value*100)}`;
+		ttVolumeText.innerText = `${formatPercentage(this.value * 100)}`;
+		const townTuneVolumeValue = parseFloat(this.value);
+		chrome.storage.local.set({ townTuneVolume: townTuneVolumeValue });
 	};
 
-	onClickElements.forEach(el => {
+	onClickElements.forEach((el) => {
 		document.getElementById(el).onclick = saveOptions;
 	});
 	document.getElementById('update-location').onclick = validateWeather;
 	document.getElementById('tab-audio-reduce-value').onchange = saveOptions;
 
-	exclamationElements.forEach(el => {
+	exclamationElements.forEach((el) => {
 		document.getElementById(el).onclick = () => {
 			let element = document.getElementById(el.split('-link')[0]);
 			element.style.animation = 'scrolled 1s';
-			element.onanimationend = () => element.style.animation = null;
-		}
+			element.onanimationend = () => (element.style.animation = null);
+		};
 	});
 
 	let enableBackgroundEl = document.getElementById('enable-background');
-	if (!(navigator.userAgentData)) enableBackgroundEl.disabled = true;
+	if (!navigator.userAgentData) enableBackgroundEl.disabled = true;
 	enableBackgroundEl.onclick = () => {
 		if (navigator.userAgentData) {
-			chrome.permissions.contains({ permissions: ['background'] }, hasPerms => {
-				if (enableBackgroundEl.checked) {
-					chrome.permissions.contains({ permissions: ['background'] }, hasPerms => {
-						if (hasPerms) saveOptions();
-						else {
-							chrome.permissions.request({ permissions: ['background'] }, hasPerms => {
+			chrome.permissions.contains(
+				{ permissions: ['background'] },
+				(hasPerms) => {
+					if (enableBackgroundEl.checked) {
+						chrome.permissions.contains(
+							{ permissions: ['background'] },
+							(hasPerms) => {
 								if (hasPerms) saveOptions();
-								else enableBackgroundEl.checked = false;
-							});
-						}
-					});
-				} else if (hasPerms) chrome.permissions.remove({ permissions: ['background'] });
-			});
+								else {
+									chrome.permissions.request(
+										{ permissions: ['background'] },
+										(hasPerms) => {
+											if (hasPerms) saveOptions();
+											else enableBackgroundEl.checked = false;
+										}
+									);
+								}
+							}
+						);
+					} else if (hasPerms)
+						chrome.permissions.remove({ permissions: ['background'] });
+				}
+			);
 		}
-	}
+	};
 
 	document.getElementById('kk-songs-selection-enable').onchange = saveOptions;
 	document.getElementById('kk-songs-selection').onchange = saveOptions;
@@ -111,46 +133,78 @@ window.onload = function () {
 	// ...but navigator.userAgentData is only supported in Chrome. yay, standards!
 	if (navigator.userAgentData) {
 		(async () => {
-			macCheck = (await navigator.userAgentData.getHighEntropyValues(['platform'])).platform == 'macOS'
-		})()
-	} else macCheck = navigator.platform == 'MacIntel'
-	if (macCheck) ctrlCmdText = 'Command/Cmd'
-	else ctrlCmdText = 'Control/Ctrl/Steuerung/Strg'
+			macCheck =
+				(await navigator.userAgentData.getHighEntropyValues(['platform']))
+					.platform == 'macOS';
+		})();
+	} else macCheck = navigator.platform == 'MacIntel';
+	if (macCheck) ctrlCmdText = 'Command/Cmd';
+	else ctrlCmdText = 'Control/Ctrl/Steuerung/Strg';
 	document.getElementById('ctrl-cmd').textContent = ctrlCmdText;
-}
+};
 
 function displayThirdBox() {
 	if (document.getElementById('weather-provider').value == 'owm-proxy') {
-		Array.from(document.getElementsByClassName('provider-url')).forEach(element => { element.style = 'display:none;' })
-		Array.from(document.getElementsByClassName('api-key')).forEach(element => { element.style = 'display:none;' })
+		Array.from(document.getElementsByClassName('provider-url')).forEach(
+			(element) => {
+				element.style = 'display:none;';
+			}
+		);
+		Array.from(document.getElementsByClassName('api-key')).forEach(
+			(element) => {
+				element.style = 'display:none;';
+			}
+		);
 		return;
-	}
-	else if (document.getElementById('weather-provider').value == 'other') {
-		Array.from(document.getElementsByClassName('api-key')).forEach(element => { element.style = 'display:none;' })
-		Array.from(document.getElementsByClassName('provider-url')).forEach(element => { element.style = '' });
-	}
-	else {
-		Array.from(document.getElementsByClassName('provider-url')).forEach(element => { element.style = 'display:none;' })
-		Array.from(document.getElementsByClassName('api-key')).forEach(element => { element.style = '' })
+	} else if (document.getElementById('weather-provider').value == 'other') {
+		Array.from(document.getElementsByClassName('api-key')).forEach(
+			(element) => {
+				element.style = 'display:none;';
+			}
+		);
+		Array.from(document.getElementsByClassName('provider-url')).forEach(
+			(element) => {
+				element.style = '';
+			}
+		);
+	} else {
+		Array.from(document.getElementsByClassName('provider-url')).forEach(
+			(element) => {
+				element.style = 'display:none;';
+			}
+		);
+		Array.from(document.getElementsByClassName('api-key')).forEach(
+			(element) => {
+				element.style = '';
+			}
+		);
 	}
 }
 
 function saveOptions() {
 	let volume = document.getElementById('volume').value;
-	let enableNotifications = document.getElementById('enable-notifications').checked;
+	let enableNotifications = document.getElementById(
+		'enable-notifications'
+	).checked;
 	// 2 separate KK variables to preserve compatibility with old versions
 	let alwaysKK = document.getElementById('always-kk').checked;
 	let enableKK = alwaysKK || document.getElementById('enable-kk').checked;
 	let enableTownTune = document.getElementById('enable-town-tune').checked;
 	let absoluteTownTune = document.getElementById('absolute-town-tune').checked;
-	let townTuneVolume   = document.getElementById('townTuneVolume').value;
+	let townTuneVolume = document.getElementById('townTuneVolume').value;
 	let zipCode = document.getElementById('zip-code').value;
 	let countryCode = document.getElementById('country-code').value;
 	let enableBadgeText = document.getElementById('enable-badge').checked;
 	let enableBackground = document.getElementById('enable-background').checked;
-	let tabAudioReduceValue = document.getElementById('tab-audio-reduce-value').value;
-	let kkSelectedSongsEnable = document.getElementById('kk-songs-selection-enable').checked;
-	let kkSelectedSongs = Array.from(document.getElementById('kk-songs-selection').selectedOptions).map(option => option.value);
+	let tabAudioReduceValue = document.getElementById(
+		'tab-audio-reduce-value'
+	).value;
+	let kkSelectedSongsEnable = document.getElementById(
+		'kk-songs-selection-enable'
+	).checked;
+	let kkSelectedSongs = Array.from(
+		document.getElementById('kk-songs-selection').selectedOptions
+	).map((option) => option.value);
 
 	if (tabAudioReduceValue > 100) {
 		document.getElementById('tab-audio-reduce-value').value = 100;
@@ -163,40 +217,61 @@ function saveOptions() {
 
 	let music;
 	let weather;
-	if (document.getElementById('animal-crossing').checked) music = 'animal-crossing';
+	if (document.getElementById('animal-crossing').checked)
+		music = 'animal-crossing';
 	else if (document.getElementById('wild-world').checked) music = 'wild-world';
 	else if (document.getElementById('new-leaf').checked) music = 'new-leaf';
-	else if (document.getElementById('new-horizons').checked) music = 'new-horizons';
-	else if (document.getElementById('game-random').checked) music = 'game-random';
+	else if (document.getElementById('new-horizons').checked)
+		music = 'new-horizons';
+	else if (document.getElementById('game-random').checked)
+		music = 'game-random';
 
 	if (document.getElementById('sunny').checked) weather = 'sunny';
 	else if (document.getElementById('snowing').checked) weather = 'snowing';
 	else if (document.getElementById('raining').checked) weather = 'raining';
 	else if (document.getElementById('live').checked) weather = 'live';
-	else if (document.getElementById('weather-random').checked) weather = 'weather-random';
+	else if (document.getElementById('weather-random').checked)
+		weather = 'weather-random';
 
 	let kkVersion;
 	if (document.getElementById('kk-version-live').checked) kkVersion = 'live';
-	else if (document.getElementById('kk-version-aircheck').checked) kkVersion = 'aircheck';
-	else if (document.getElementById('kk-version-both').checked) kkVersion = 'both';
+	else if (document.getElementById('kk-version-aircheck').checked)
+		kkVersion = 'aircheck';
+	else if (document.getElementById('kk-version-both').checked)
+		kkVersion = 'both';
 
 	let tabAudio;
 	if (document.getElementById('tab-audio-reduce').checked) tabAudio = 'reduce';
-	else if (document.getElementById('tab-audio-pause').checked) tabAudio = 'pause';
-	else if (document.getElementById('tab-audio-nothing').checked) tabAudio = 'nothing';
+	else if (document.getElementById('tab-audio-pause').checked)
+		tabAudio = 'pause';
+	else if (document.getElementById('tab-audio-nothing').checked)
+		tabAudio = 'nothing';
 
 	document.getElementById('raining').disabled = music == 'animal-crossing';
 	document.getElementById('absolute-town-tune').disabled = !enableTownTune;
 
-	let enabledKKVersion = !(document.getElementById('always-kk').checked || document.getElementById('enable-kk').checked);
+	let enabledKKVersion = !(
+		document.getElementById('always-kk').checked ||
+		document.getElementById('enable-kk').checked
+	);
 
-	document.getElementById('music-selection').querySelectorAll('input').forEach(updateChildrenState.bind(null, alwaysKK));
+	document
+		.getElementById('music-selection')
+		.querySelectorAll('input')
+		.forEach(updateChildrenState.bind(null, alwaysKK));
 
-	document.getElementById('weather-selection').querySelectorAll('input').forEach(updateChildrenState.bind(null, alwaysKK))
+	document
+		.getElementById('weather-selection')
+		.querySelectorAll('input')
+		.forEach(updateChildrenState.bind(null, alwaysKK));
 
-	document.getElementById('kk-version-selection').querySelectorAll('input').forEach(updateChildrenState.bind(null, enabledKKVersion));
+	document
+		.getElementById('kk-version-selection')
+		.querySelectorAll('input')
+		.forEach(updateChildrenState.bind(null, enabledKKVersion));
 
-	document.getElementById('kk-songs-selection').disabled = !kkSelectedSongsEnable;
+	document.getElementById('kk-songs-selection').disabled =
+		!kkSelectedSongsEnable;
 
 	chrome.storage.sync.set({
 		music,
@@ -214,117 +289,167 @@ function saveOptions() {
 		tabAudio,
 		tabAudioReduceValue,
 		kkSelectedSongsEnable,
-		kkSelectedSongs
+		kkSelectedSongs,
 	});
-	window.localStorage.setItem("volume", volume)
-	window.localStorage.setItem("townTuneVolume", townTuneVolume)
+	chrome.storage.local.set({ townTuneVolume: townTuneVolume });
+	chrome.storage.local.set({ volume: volume });
 }
+
+// Make saveOptions available globally for tune_editor.js
+globalThis.saveOptions = saveOptions;
 
 function restoreOptions() {
-	chrome.storage.sync.get({
-		volume: 0.5,
-		music: 'new-horizons',
-		weather: 'sunny',
-		enableNotifications: true,
-		enableKK: true,
-		alwaysKK: false,
-		kkVersion: 'live',
-		enableTownTune: true,
-		absoluteTownTune: false,
-		townTuneVolume: 0.75,
-		weatherProvider: 'owm-proxy',
-		zipCode: "98052",
-		countryCode: "us",
-		apiKey: '',
-		enableBadgeText: true,
-		tabAudio: 'pause',
-		enableBackground: false,
-		tabAudioReduceValue: 80,
-		kkSelectedSongsEnable: false,
-		kkSelectedSongs: []
-	}, items => {
-		if (window.localStorage.getItem('volume') == null) {
-			window.localStorage.setItem('volume', `${items.volume}`);
-		}
-		if (window.localStorage.getItem('townTuneVolume') == null) {
-			window.localStorage.setItem('townTuneVolume', `${items.townTuneVolume}`);
-		}
-		items.volume = (window.localStorage.getItem("volume") >= 0 && window.localStorage.getItem("volume") !== null) ? window.localStorage.getItem("volume") : 0.5;
-		items.townTuneVolume = (window.localStorage.getItem("townTuneVolume") >= 0 && window.localStorage.getItem("volume") !== null) ? window.localStorage.getItem("townTuneVolume") : 0.75;
-		document.getElementById('volume').value = items.volume;
-		document.getElementById('volumeText').innerText = `${formatPercentage(items.volume*100)}`;
-		document.getElementById(items.music).checked = true;
-		document.getElementById(items.weather).checked = true;
-		document.getElementById('enable-notifications').checked = items.enableNotifications;
-		document.getElementById('no-kk').checked = true;
-		document.getElementById('enable-kk').checked = items.enableKK;
-		document.getElementById('always-kk').checked = items.alwaysKK;
-		document.getElementById('kk-version-' + items.kkVersion).checked = true;
-		document.getElementById('enable-town-tune').checked = items.enableTownTune;
-		document.getElementById('absolute-town-tune').checked = items.absoluteTownTune;
-		document.getElementById('townTuneVolume').value = items.townTuneVolume;
-		document.getElementById('townTuneVolumeText').innerText = `${formatPercentage(items.townTuneVolume*100)}`;
-		document.getElementById('zip-code').value = items.zipCode;
-		document.getElementById('country-code').value = items.countryCode;
-		document.getElementById('weather-provider').value = items.weatherProvider;
-		document.getElementById('enable-badge').checked = items.enableBadgeText;
-		document.getElementById('enable-background').checked = navigator.userAgentData ? items.enableBackground : false;
-		document.getElementById('tab-audio-' + items.tabAudio).checked = true;
-		document.getElementById('tab-audio-reduce-value').value = items.tabAudioReduceValue;
-		document.getElementById('kk-songs-selection-enable').checked = items.kkSelectedSongsEnable;
+	// Get volume values from chrome.storage.local first
+	chrome.storage.local.get(['volume', 'townTuneVolume'], (localItems) => {
+		// Then get other settings from sync storage
+		chrome.storage.sync.get(
+			{
+				volume: 0.5,
+				music: 'new-horizons',
+				weather: 'sunny',
+				enableNotifications: true,
+				enableKK: true,
+				alwaysKK: false,
+				kkVersion: 'live',
+				enableTownTune: true,
+				absoluteTownTune: false,
+				townTuneVolume: 0.75,
+				weatherProvider: 'owm-proxy',
+				zipCode: '98052',
+				countryCode: 'us',
+				apiKey: '',
+				enableBadgeText: true,
+				tabAudio: 'pause',
+				enableBackground: false,
+				tabAudioReduceValue: 80,
+				kkSelectedSongsEnable: false,
+				kkSelectedSongs: [],
+			},
+			(items) => {
+				// Use local storage values if available, otherwise use sync defaults
+				items.volume =
+					localItems.volume !== undefined ? localItems.volume : items.volume;
+				items.townTuneVolume =
+					localItems.townTuneVolume !== undefined
+						? localItems.townTuneVolume
+						: items.townTuneVolume;
+				document.getElementById('volume').value = items.volume;
+				document.getElementById('volumeText').innerText =
+					`${formatPercentage(items.volume * 100)}`;
+				document.getElementById(items.music).checked = true;
+				document.getElementById(items.weather).checked = true;
+				document.getElementById('enable-notifications').checked =
+					items.enableNotifications;
+				document.getElementById('no-kk').checked = true;
+				document.getElementById('enable-kk').checked = items.enableKK;
+				document.getElementById('always-kk').checked = items.alwaysKK;
+				document.getElementById('kk-version-' + items.kkVersion).checked = true;
+				document.getElementById('enable-town-tune').checked =
+					items.enableTownTune;
+				document.getElementById('absolute-town-tune').checked =
+					items.absoluteTownTune;
+				document.getElementById('townTuneVolume').value = items.townTuneVolume;
+				document.getElementById('townTuneVolumeText').innerText =
+					`${formatPercentage(items.townTuneVolume * 100)}`;
+				document.getElementById('zip-code').value = items.zipCode;
+				document.getElementById('country-code').value = items.countryCode;
+				document.getElementById('weather-provider').value =
+					items.weatherProvider;
+				document.getElementById('enable-badge').checked = items.enableBadgeText;
+				document.getElementById('enable-background').checked =
+					navigator.userAgentData ? items.enableBackground : false;
+				document.getElementById('tab-audio-' + items.tabAudio).checked = true;
+				document.getElementById('tab-audio-reduce-value').value =
+					items.tabAudioReduceValue;
+				document.getElementById('kk-songs-selection-enable').checked =
+					items.kkSelectedSongsEnable;
 
-		// Disable raining if the game is animal crossing, since there is no raining music for animal crossing.
-		document.getElementById('raining').disabled = items.music == 'animal-crossing';
-		document.getElementById('absolute-town-tune').disabled = !items.enableTownTune;
+				// Disable raining if the game is animal crossing, since there is no raining music for animal crossing.
+				document.getElementById('raining').disabled =
+					items.music == 'animal-crossing';
+				document.getElementById('absolute-town-tune').disabled =
+					!items.enableTownTune;
 
-		let enabledKKVersion = !(items.alwaysKK || items.enableKK);
+				let enabledKKVersion = !(items.alwaysKK || items.enableKK);
 
-		document.getElementById('music-selection').querySelectorAll('input').forEach(updateChildrenState.bind(null, items.alwaysKK));
-		document.getElementById('weather-selection').querySelectorAll('input').forEach(updateChildrenState.bind(null, items.alwaysKK));
-		document.getElementById('kk-version-selection').querySelectorAll('input').forEach(updateChildrenState.bind(null, enabledKKVersion));
+				document
+					.getElementById('music-selection')
+					.querySelectorAll('input')
+					.forEach(updateChildrenState.bind(null, items.alwaysKK));
+				document
+					.getElementById('weather-selection')
+					.querySelectorAll('input')
+					.forEach(updateChildrenState.bind(null, items.alwaysKK));
+				document
+					.getElementById('kk-version-selection')
+					.querySelectorAll('input')
+					.forEach(updateChildrenState.bind(null, enabledKKVersion));
 
-		const kkSongsSelect = document.getElementById('kk-songs-selection');
-		kkSongsSelect.disabled = !items.kkSelectedSongsEnable;
+				const kkSongsSelect = document.getElementById('kk-songs-selection');
+				kkSongsSelect.disabled = !items.kkSelectedSongsEnable;
 
-		items.kkSelectedSongs.forEach((song) => {
-			const songIndex = Array.from(kkSongsSelect.options).findIndex((option, idx) => {
-				return option.value === song ? String(idx) : false; // Why String()?: if idx is 0, the function returns -1
-			});
-			kkSongsSelect.options[songIndex].selected = 'selected';
-		});
+				items.kkSelectedSongs.forEach((song) => {
+					const songIndex = Array.from(kkSongsSelect.options).findIndex(
+						(option, idx) => {
+							return option.value === song ? String(idx) : false; // Why String()?: if idx is 0, the function returns -1
+						}
+					);
+					kkSongsSelect.options[songIndex].selected = 'selected';
+				});
+			}
+		);
 	});
-
 }
 
-function responseMessage(message = 'An unknown error occurred', success = false) {
+function responseMessage(
+	message = 'An unknown error occurred',
+	success = false
+) {
 	let updateLocationEl = document.getElementById('update-location');
 	let weatherResponseEl = document.getElementById('weather-response');
 
 	if (success == true) {
-		weatherResponseEl.style.color = "#39d462";
+		weatherResponseEl.style.color = '#39d462';
 		saveOptions();
-	} else weatherResponseEl.style.color = "#d43939";
+	} else weatherResponseEl.style.color = '#d43939';
 	weatherResponseEl.textContent = message;
 
-	updateLocationEl.textContent = "Update Location";
+	updateLocationEl.textContent = 'Update Location';
 	updateLocationEl.disabled = false;
 }
 
 async function getPermissions(url) {
-	chrome.permissions.contains({ origins: [`*://${new URL(url).hostname}/*`] }, hasPerms => {
-		if (hasPerms) {
-			console.log('Has permissions!');
-			return true;
+	chrome.permissions.contains(
+		{
+			origins: [
+				`http://${new URL(url).hostname}/*`,
+				`https://${new URL(url).hostname}/*`,
+			],
+		},
+		(hasPerms) => {
+			if (hasPerms) {
+				printDebug('Has permissions!');
+				return true;
+			} else {
+				chrome.permissions.request(
+					{
+						origins: [
+							`http://${new URL(url).hostname}/*`,
+							`https://${new URL(url).hostname}/*`,
+						],
+					},
+					(hasPerms) => {
+						if (!hasPerms) {
+							responseMessage(
+								'You must accept the permissions to use that weather provider.'
+							);
+							throw 'No permissions';
+						}
+					}
+				);
+			}
 		}
-		else {
-			chrome.permissions.request({ origins: [`*://${new URL(url).hostname}/*`] }, hasPerms => {
-				if (!(hasPerms)) {
-					responseMessage('You must accept the permissions to use that weather provider.');
-					throw 'No permissions';
-				}
-			});
-		}
-	});
+	);
 }
 
 let city;
@@ -332,10 +457,12 @@ let country;
 
 function validateWeather() {
 	let updateLocationEl = document.getElementById('update-location');
-	updateLocationEl.textContent = "Validating...";
+	updateLocationEl.textContent = 'Validating...';
 	updateLocationEl.disabled = true;
 
-	let weatherProvider = document.getElementById('weather-provider').value.trim();
+	let weatherProvider = document
+		.getElementById('weather-provider')
+		.value.trim();
 	let providerURL = document.getElementById('provider-url').value.trim();
 	let apiKey = document.getElementById('api-key').value.trim();
 	let zip = document.getElementById('zip-code').value.trim();
@@ -348,8 +475,13 @@ function validateWeather() {
 		responseMessage('You must specify the URL of your weather provider.');
 		return;
 	}
-	if (!((weatherProvider == 'other') || (weatherProvider == 'owm-proxy')) && apiKey == '') {
-		responseMessage('You must specify your API key. If you don\'t have one, pick a proxy option.');
+	if (
+		!(weatherProvider == 'other' || weatherProvider == 'owm-proxy') &&
+		apiKey == ''
+	) {
+		responseMessage(
+			"You must specify your API key. If you don't have one, pick a proxy option."
+		);
 		return;
 	}
 	if (zip == '') {
@@ -368,8 +500,7 @@ function validateWeather() {
 	let url;
 	switch (weatherProvider) {
 		case 'owm':
-			getPermissions('https://api.openweathermap.org/')
-			.then(() => {
+			getPermissions('https://api.openweathermap.org/').then(() => {
 				url = `https://api.openweathermap.org/data/2.5/weather?q=${zip},${countryCode}&APPID=${apiKey}`;
 				getWeather(url);
 			});
@@ -378,26 +509,28 @@ function validateWeather() {
 			try {
 				let id;
 				getPermissions('https://fnw-us.foreca.com/')
-				.then(() => {
-					fetch(`https://fnw-us.foreca.com/api/v1/location/search/${zip}?country=${countryCode}&token=${apiKey}`)
-					.then(response => response.json())
-					.then(response => {
-						city = response.locations[0].name;
-						country = response.locations[0].country;
-						id = response.locations[0].id;
+					.then(() => {
+						fetch(
+							`https://fnw-us.foreca.com/api/v1/location/search/${zip}?country=${countryCode}&token=${apiKey}`
+						)
+							.then((response) => response.json())
+							.then((response) => {
+								city = response.locations[0].name;
+								country = response.locations[0].country;
+								id = response.locations[0].id;
 
-						url = `https://fnw-us.foreca.com/api/v1/current/${id}?token=${apiKey}`;
-						getWeather(url);
+								url = `https://fnw-us.foreca.com/api/v1/current/${id}?token=${apiKey}`;
+								getWeather(url);
+							})
+							.catch((error) => {
+								console.error(error);
+								responseMessage('An unknown error occurred', false);
+							});
 					})
-					.catch(error => {
+					.catch((error) => {
 						console.error(error);
 						responseMessage('An unknown error occurred', false);
 					});
-				})
-				.catch(error => {
-					console.error(error);
-					responseMessage('An unknown error occurred', false);
-				})
 			} catch (error) {
 				console.error(error);
 				responseMessage('An unknown error occurred', false);
@@ -407,51 +540,56 @@ function validateWeather() {
 			try {
 				let id;
 				getPermissions('https://pfa.foreca.com/')
-				.then(() => {
-					fetch(`https://pfa.foreca.com/api/v1/location/search/${zip}?country=${countryCode}&token=${apiKey}`)
-					.then(response => response.json())
-					.then(response => {
-						city = response.locations[0].name;
-						country = response.locations[0].country;
-						id = response.locations[0].id;
+					.then(() => {
+						fetch(
+							`https://pfa.foreca.com/api/v1/location/search/${zip}?country=${countryCode}&token=${apiKey}`
+						)
+							.then((response) => response.json())
+							.then((response) => {
+								city = response.locations[0].name;
+								country = response.locations[0].country;
+								id = response.locations[0].id;
 
-						url = `https://pfa.foreca.com/api/v1/current/${id}?token=${apiKey}`;
-						getWeather(url);
+								url = `https://pfa.foreca.com/api/v1/current/${id}?token=${apiKey}`;
+								getWeather(url);
+							})
+							.catch((error) => {
+								console.error(error);
+								responseMessage('An unknown error occurred', false);
+							});
 					})
-					.catch(error => {
+					.catch((error) => {
 						console.error(error);
 						responseMessage('An unknown error occurred', false);
 					});
-				})
-				.catch(error => {
-					console.error(error);
-					responseMessage('An unknown error occurred', false);
-				})
 			} catch (error) {
 				console.error(error);
 				responseMessage('An unknown error occurred', false);
 			}
 			break;
 		case 'other':
-			getPermissions(`${providerURL}`)
-			.then(() => {
-				fetch(`${new URL(providerURL).protocol}//${new URL(providerURL).host}/api/j-settings`)
-				.then(response => response.json())
-				.then(response => {
-					if (response.weather.enabled) {
-						url = `${providerURL}/${countryCode}/${zip}`; 
-						getWeather(url);
-					} else responseMessage('Weather is not enabled for this J variant server')
-				})
-				.catch(error => {
-					console.error(error);
-					responseMessage('Please enter a J variant server URL')
-				})
-			})
+			getPermissions(`${providerURL}`).then(() => {
+				fetch(
+					`${new URL(providerURL).protocol}//${new URL(providerURL).host}/api/j-settings`
+				)
+					.then((response) => response.json())
+					.then((response) => {
+						if (response.weather.enabled) {
+							url = `${providerURL}/${countryCode}/${zip}`;
+							getWeather(url);
+						} else
+							responseMessage(
+								'Weather is not enabled for this S variant server'
+							);
+					})
+					.catch((error) => {
+						console.error(error);
+						responseMessage('Please enter a S variant server URL');
+					});
+			});
 			break;
 		default:
-			getPermissions('https://acmusicext.com/')
-			.then(() => {
+			getPermissions('https://acmusicext.com/').then(() => {
 				url = `https://acmusicext.com/api/weather-v1/${countryCode}/${zip}`;
 				getWeather(url);
 			});
@@ -460,8 +598,10 @@ function validateWeather() {
 }
 
 function getWeather(url) {
-	let weatherProvider = document.getElementById('weather-provider').value.trim();
-	let proxy = ((weatherProvider == 'owm-proxy') || (weatherProvider == 'other'));
+	let weatherProvider = document
+		.getElementById('weather-provider')
+		.value.trim();
+	let proxy = weatherProvider == 'owm-proxy' || weatherProvider == 'other';
 	let zip = document.getElementById('zip-code').value.trim();
 	let weather;
 
@@ -471,7 +611,7 @@ function getWeather(url) {
 		let response;
 		try {
 			response = JSON.parse(request.responseText);
-		} catch (Exception) {
+		} catch {
 			responseMessage();
 			return;
 		}
@@ -481,50 +621,70 @@ function getWeather(url) {
 				city = response.city;
 				country = response.country;
 				weather = response.weather;
-			} else switch (weatherProvider) {
-				case 'foreca':
-					// City and country was handled earlier
+			} else
+				switch (weatherProvider) {
+					case 'foreca': {
+						// City and country was handled earlier
 
-					let raining = /rain/i.test(response.weather)
-					let snowing = /rain/i.test(response.weather)
-					if (raining) weather = "Rain"
-					else if (snowing) weather = "Snow"
-					else weather = "Clear"
+						let raining = /rain/i.test(response.weather);
+						let snowing = /rain/i.test(response.weather);
+						if (raining) weather = 'Rain';
+						else if (snowing) weather = 'Snow';
+						else weather = 'Clear';
 
-					break;
-				case 'owm':
-					// City and country
-					city = response.name;
-					country = response.sys.country;
-					weather = response.weather[0].id.toString();
+						break;
+					}
+					case 'owm': {
+						// City and country
+						city = response.name;
+						country = response.sys.country;
+						weather = response.weather[0].id.toString();
 
-					// Analyzing weather ID to make proper response
-					if (weather.startsWith('6')) weather = "Snow"
-					else if (weather.startsWith('8')) weather = "Clear"
-					else weather = "Rain"
+						// Analyzing weather ID to make proper response
+						if (weather.startsWith('6')) weather = 'Snow';
+						else if (weather.startsWith('8')) weather = 'Clear';
+						else weather = 'Rain';
 
-					break;
-			}
+						break;
+					}
+				}
 
-			responseMessage(`Success! The current weather status in ${city}, ${country} is "${weather}"`, true);
-		}
-		else {
+			responseMessage(
+				`Success! The current weather status in ${city}, ${country} is "${weather}"`,
+				true
+			);
+		} else {
 			if (response.error) {
-				if ((response.error === "City not found") && (containsSpace(zip))) {
-					response.error += " – Try with only the first part of the ZIP code / postal code."
+				if (response.error === 'City not found' && containsSpace(zip)) {
+					response.error +=
+						' – Try with only the first part of the ZIP code / postal code.';
 				}
 				responseMessage(response.error);
-			}
-			else responseMessage();
+			} else responseMessage();
 		}
-	}
+	};
 
 	request.onerror = () => responseMessage();
 
-	request.open("GET", url, true);
+	request.open('GET', url, true);
 	request.send();
 }
 
-function updateChildrenState(disabled, childElement){
-	childElement.disabled = disabled
+function updateChildrenState(disabled, childElement) {
+	childElement.disabled = disabled;
+}
+
+if (DEBUG_FLAG) {
+	globalThis.setTime = function (hour, playTownTune) {
+		notifyListeners('hourMusic', [
+			hour,
+			options.weather,
+			options.music,
+			playTownTune,
+		]);
+	};
+	globalThis.changeWeather = function (newWeather) {
+		weather = newWeather;
+		callback();
+	};
 }
