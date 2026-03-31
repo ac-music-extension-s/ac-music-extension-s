@@ -39,7 +39,7 @@ function StateManager() {
 			if (!badgeManager) badgeManager = new BadgeManager(this.registerCallback, options.enableBadgeText);
 
 			if (!weatherManager) {
-				weatherManager = new WeatherManager(options.zipCode, options.countryCode);
+				weatherManager = new WeatherManager(options.WxApiKey, options.WxLocValue);
 				weatherManager.registerChangeCallback(() => {
 					if (!isKK() && isLive()) {
 						let musicAndWeather = getMusicAndWeather();
@@ -101,8 +101,8 @@ function StateManager() {
 			absoluteTownTune: false,
 			townTuneVolume: 0.75,
 			//enableAutoPause: false,
-			zipCode: "98052",
-			countryCode: "us",
+			WxApiKey: "", // no default here
+			WxLocValue: "auto:ip",
 			enableBadgeText: true,
 			tabAudio: 'pause',
 			enableBackground: false,
@@ -209,8 +209,8 @@ function StateManager() {
 		// Trigger 'options' variable update
 		getSyncedOptions(() => {
 			// Detect changes and notify corresponding listeners
-			if ('zipCode' in changes) weatherManager.setZip(changes.zipCode.newValue);
-			if ('countryCode' in changes) weatherManager.setCountry(changes.countryCode.newValue);
+			if ('WxApiKey' in changes) weatherManager.setKey(changes.WxApiKey.newValue);
+			if ('WxLocValue' in changes) weatherManager.setLocation(changes.WxLocValue.newValue);
 			if ('volume' in changes) notifyListeners("volume", [changes.volume.newValue]);
 			if (('music' in changes || 'weather' in changes) && !isKK()) {
 				let musicAndWeather = getMusicAndWeather();

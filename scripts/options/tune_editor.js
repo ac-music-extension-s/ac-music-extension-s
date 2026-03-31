@@ -1,4 +1,5 @@
 $(function(){
+  let isWin7 = window.location.href.includes('options2.html');
 var pitchTemplate, playButton, saveButton, tune;
 const defaultTune = ["C3", "E3", "C3", "G2", "F2", "G2", "B2", "D3", "C3", "zZz", "?", "zZz", "C3", "-", "-", "zZz"]; // From AC: Wild World
 var tuneLength = 16;
@@ -26,6 +27,12 @@ var createPitchControl = function(index) {
 
   pitch.className = 'pitch';
   pitch.id = 'pitch' + index;
+  if (isWin7) {
+    pitch.style.display = "block";
+    pitch.hidden = false;
+    name.hidden = false;
+    slider.hidden = false;
+  }
 
   name.value = tune[index];
   name.style.borderColor = "transparent";

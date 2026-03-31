@@ -1,14 +1,16 @@
 ![Project Banner](docs/banner.png)
 
-# Animal Crossing Music 🍀 (J variant)
+# Animal Crossing Music 🍀 (T4 variant)
 
 **Animal Crossing Music** is a fun browser extension that lets you play Animal Crossing's music in the browser while you browse the web! ✨ 
+
+The T4 variant (this repository) was made as a means of adding silly features that aren't entirely necessary. It's based off the J variant, as it's more frequently maintained.
 
 The J variant was made after over 3 years of no upstream maintenance, and a strong love for Animal Crossing 💌
 
 The music updates in real-time on the hour, and informs you via an optional desktop notification and customizable town tune! 🌱
 
-***The J variant of Animal Crossing Music is not associated with upstream.** Please do not go to PikaDude, anyone who works on the main project, or anyone in the Discord server, for any kind of support.*
+***The T4 and J variants of Animal Crossing Music are not associated with upstream.** Please do not go to PikaDude, anyone who works on the main project, or anyone in the Discord server, for any kind of support.*
 
 ## Features
 ### Hourly music 🕒
@@ -21,7 +23,9 @@ Listen to the corresponding hourly music from the main Animal Crossing titles:
 Raining and snowing variants are also included!
 
 ### Live weather 🌧
-If you enable the "Live Weather" function, weather variants of the hourly music will be automatically picked according to the weather in your specified location!
+~~If you enable the "Live Weather" function, weather variants of the hourly music will be automatically picked according to the weather in your specified location!~~
+
+(WIP now, I'm planning to switch weather provider.)
 
 ### K.K. Slider 🎙
 Listen to K.K. Slider's songs! The extension features both 'live' and 'aircheck' version of his tunes.
@@ -35,7 +39,7 @@ With it, you can compose your custom town tune! It'll be played every time an ho
 
 ## Installation
 ### Stable release
-~~Currently, there is no stable release. Please wait for a future update to this README.~~ There's a stable release! I'll write instructions tomorrow - for now, download the ZIP file [here](https://github.com/jbmagination/ac-music-extension-j/releases/latest/download/ac-music-extension.zip) and follow the directions below.
+Currently, there is no stable release. Please wait for a future update to this README.
 
 ### Other branches (using the source code)
 You can download the source code of the project and install the unpacked extension yourself to access the latest, greatest and probably buggy unreleased features and updates. Just click on the `Code` button at the top-right of the page and then on `Download ZIP`.
@@ -71,13 +75,13 @@ If you're still having trouble, also try:
 ```
 
 ### Branch conventions
-- The `stable` branch currently doesn't exist - but when it does, it'll contain the latest stable version of the extension, which you'll be able to find in [GitHub releases](https://github.com/jbmagination/ac-music-extension-j/releases/latest). **Do not merge or make PRs here.**
+- The `stable` branch currently doesn't exist - but when it does, it'll contain the latest stable version of the extension, which you'll be able to find in [GitHub releases](https://github.com/SilverT4/ac-mus-ext-t4/releases/latest). **Do not merge or make PRs here.**
 - The `develop` branch contains the latest fully-integrated features of the extension. **This is where most PRs should be merged into.**
 - The `upstream` branch contains the current latest code from `animal-crossing-music-extension/ac-music-extension`. **Do not merge or make PRs here.**
 - There may be other branches that are used for feature development that may be too buggy and unstable to have on `develop`, or is simply being tested for another reason. You can find these branches by looking for the `exp/` before their name. **If you do PR to these branches, please note that they may be deleted at any time.**
 
 ## Help & Support
-*The J variant of Animal Crossing Music is not official.* Please do not go to the Discord server for assistance with the extension! **If you need any help with this extension, make an issue here on GitHub or DM me on Discord!**
+*The T4 and J variants of Animal Crossing Music are not official.* Please do not go to the Discord server for assistance with the extension! **If you need any help with this extension, make an issue here on GitHub or DM me on Discord!**
 
 Although, feel free to jump into the project's [Discord server](https://discord.gg/4FMrEF8) anyway - it's not a very active server, but it's a nice little community. (And, of course, you can find me there.)
 
@@ -85,17 +89,19 @@ Although, feel free to jump into the project's [Discord server](https://discord.
 Contributions to the project are **greatly** appreciated! Here is how you can help to make this project even better:
 
 ### Issues
-If you want to report a bug, or have a feature request/proposal for improvement, feel free to open a public [issue](https://github.com/jbmagination/ac-music-extension-j/issues) on the project repository.
+If you want to report a bug, or have a feature request/proposal for improvement, feel free to open a public [issue](https://github.com/SilverT4/ac-mus-ext-t4/issues) on the project repository.
 
 ### PR Submission
-[Pull requests](https://github.com/jbmagination/ac-music-extension-j/pulls) are equally welcomed. Just make sure to **not submit them to `stable` or `upstream`** and give some love to the PR description!
+[Pull requests](https://github.com/SilverT4/ac-mus-ext-t4/pulls) are equally welcomed. Just make sure to **not submit them to `stable` or `upstream`** and give some love to the PR description!
 
 ## Credit
-All of the contributors for versions upstream (post-3.0) can be found [here](https://github.com/animal-crossing-music-extension/ac-music-extension/graphs/contributors). All of the contributors for this J variant can be found [here](https://github.com/jbmagination/ac-music-extension-j/graphs/contributors).
+All of the contributors for versions upstream (post-3.0) can be found [here](https://github.com/animal-crossing-music-extension/ac-music-extension/graphs/contributors). All of the contributors for the J variant can be found [here](https://github.com/jbmagination/ac-music-extension-j/graphs/contributors). Lastly, all of the contributors for this T4 variant can be found [here](https://github.com/SilverT4/ac-mus-ext-t4/graphs/contributors).
 
 Credit is due to [Andrex](https://www.neogaf.com/members/andrex.20593/) and [blazescorch2](https://www.neogaf.com/members/blazescorch2.142800/) from NeoGAF for developing the original 1.0 and 2.0 versions of the extension.
 
 Original concept of the extension taken from [Brian Lee](https://b-lee.net/)'s [Animal Crossing music website](https://tane.us/ac/).
+
+Weather services provided by [the free weather API](https://weatherapi.com).
 
 ## Licensing
 Animal Crossing Music is licensed under the zlib license. See [LICENSE.md](./LICENSE.md) for reference.

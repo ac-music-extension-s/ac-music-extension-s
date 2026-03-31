@@ -58,6 +58,8 @@ node_modules/
 *.mp3
 *.ai
 
+.ghtoken
+
 # Exclusions
 !sound/bells.ogg
 img/cover/kk

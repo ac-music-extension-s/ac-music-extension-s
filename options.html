@@ -13,6 +13,7 @@
 	<script src="scripts/options/tune_editor.js"></script>
 	<script src="scripts/background/KKSongs.js"></script>
 	<script src="scripts/options/options.js"></script>
+	<script src="scripts/options/weather_api.js"></script>
 
 </head>
 
@@ -26,6 +27,12 @@
 				</li>
 				<li class="town-tune-link" id="town-tune-button">
 					<a href="#town-tune">Town Tune Editor</a>
+				</li>
+				<li class="weather-api" id="weather-api">
+					<a href="#weather">Weather Settings</a>
+				</li>
+				<li class="favs" id="favstuff">
+					<a href="#favourites">Favourites (WIP)</a>
 				</li>
 				<li class="help-link">
 					<a href="#about">About</a>
@@ -97,7 +104,7 @@
 						</div>
 						<div class="radio">
 							<input id="live" name="weather-choice" type="radio"><label
-								for="live"><span><span></span></span>Live Weather <a href="#live-weather-location"
+								for="live"><span><span></span></span>Live Weather <a href="#weather"
 									id="live-weather-location-link" class="exclamation">!</a></label>
 						</div>
 						<div class="radio">
@@ -216,6 +223,7 @@
 								<option value="owm">OpenWeatherMap (provide your own API key)</option>
 								<option value="foreca">Foreca US (provide your own API key)</option>
 								<option value="foreca-eu">Foreca EU (provide your own API key)</option>
+                <option value="weatherapi">WeatherAPI (provide your own API key)</option>
 								<option value="other">Other (AC Music J variant server)</option>
 							</select>
 							<br />
@@ -527,6 +535,474 @@
 				</div>
 			</div>
 
+			<div id="weather">
+				<header>
+					<h1>WeatherAPI Setup</h1>
+				</header>
+				<div class="content">
+					<section>
+						<h3>API Key</h3>
+						<div class="api-key">
+							<p>Input your WeatherAPI key.<br/>To get your API key, follow the instructions <a href="https://github.com/SilverT4/ac-mus-ext-t4/blob/develop/weather.md">here</a>.</p>
+							<input id="wxapi-key" value="">
+						</div>
+					</section>
+					<section>
+						<h3>Location Setup</h3>
+						<div class="location-setup">
+							<p>Choose a location to get weather data from. By default, the extension uses your computer's IP address (<tt>auto:ip</tt>)</p>
+							<div class="radio">
+								<input type="radio" id="local-ip" name="location-type"><label for="local-ip"><span><span></span></span>Use your computer's IP address</label>
+							</div>
+							<div class="radio">
+								<input type="radio" id="ip-input" name="location-type"><label for="ip-input"><span><span></span></span>Use another IP address</label>
+								<span></span>
+								<input id="ip-address" size="15" disabled>
+							</div>
+							<div class="radio">
+								<input type="radio" id="lat-lon" name="location-type"><label for="lat-lon"><span><span></span></span>Latitude, Longitude</label>
+								<br/>
+								<label for="latitude">Latitude:</label>
+								<input id="latitude" type="text" size="7" disabled>
+								<label for="longitude">Longitude:</label>
+								<input id="longitude" type="text" size="7" disabled>
+							</div>
+							<div class="radio">
+								<input type="radio" id="zip-code" name="location-type"><label for="zip-code"><span><span></span></span>US ZIP Code</label>
+								<br/>
+								<input id="us-zip" type="text" size="7" disabled>
+							</div>
+							<div class="radio">
+								<input type="radio" id="uk-postal" name="location-type"><label for="uk-postal"><span><span></span></span>UK Postal Code</label>
+								<br/>
+								<input id="uk-post" type="text" size="7" disabled>
+							</div>
+							<div class="radio">
+								<input type="radio" id="canada-post" name="location-type"><label for="canada-post"><span><span></span></span>Canada Postal Code</label>
+								<br/>
+								<input id="ca-post" type="text" size="7" disabled>
+							</div>
+							<div class="radio">
+								<input type="radio" id="metar" name="location-type"><label for="metar"><span><span></span></span>METAR Code</label>
+								<br/>
+								<input id="metar-code" type="text" size="7" disabled>
+							</div>
+							<div class="radio">
+								<input type="radio" id="iata" name="location-type"><label for="iata"><span><span></span></span>IATA Code</label>
+								<br/>
+								<input id="iata-code" type="text" size="7" disabled>
+							</div>
+							<div class="radio">
+								<input type="radio" id="search" name="location-type"><label for="search"><span><span></span></span>Search for location</label>
+								<br/>
+								<input type="search" id="search-query" size="30" disabled>
+								<button id="commit-search" disabled>Search</button>
+							</div>
+							<div class="radio">
+								<input type="radio" id="last-used-search" name="location-type" disabled><label for="last-used-search"><span><span></span></span>Last used search location: N/A</label>
+							</div>
+						</div>
+					</section>
+					<section>
+						<div class="footer">
+							<button id="save_wx_loc">Save location settings</button>
+						</div>
+					</section>
+				</div>
+			</div>
+
+			<div id="favourites">
+				<div id="am-hours" style="display: inline-block;">
+					<h4>12 AM</h4>
+					<label for="12am-game">Game: </label><select id="12am-game">
+						<option value="no-change">No change</option>
+						<option value="game-random">Randomize</option>
+						<option value="animal-crossing">Animal Crossing/Forest</option>
+						<option value="wild-world">Wild World/City Folk</option>
+						<option value="new-leaf">New Leaf</option>
+						<option value="new-horizons">New Horizons</option>
+					</select>
+					<label for="12am-wx">Weather: </label><select id="12am-wx">
+						<option value="no-change">No change</option>
+						<option value="weather-random">Randomize</option>
+						<option value="sunny">Sunny</option>
+						<option value="raining">Raining</option>
+						<option value="snowing">Snowing</option>
+					</select>
+					<h4>1 AM</h4>
+					<label for="1am-game">Game: </label><select id="1am-game">
+						<option value="no-change">No change</option>
+						<option value="game-random">Randomize</option>
+						<option value="animal-crossing">Animal Crossing/Forest</option>
+						<option value="wild-world">Wild World/City Folk</option>
+						<option value="new-leaf">New Leaf</option>
+						<option value="new-horizons">New Horizons</option>
+					</select>
+					<label for="1am-wx">Weather: </label><select id="1am-wx">
+						<option value="no-change">No change</option>
+						<option value="weather-random">Randomize</option>
+						<option value="sunny">Sunny</option>
+						<option value="raining">Raining</option>
+						<option value="snowing">Snowing</option>
+					</select>
+					<h4>2 AM</h4>
+					<label for="2am-game">Game: </label><select id="2am-game">
+						<option value="no-change">No change</option>
+						<option value="game-random">Randomize</option>
+						<option value="animal-crossing">Animal Crossing/Forest</option>
+						<option value="wild-world">Wild World/City Folk</option>
+						<option value="new-leaf">New Leaf</option>
+						<option value="new-horizons">New Horizons</option>
+					</select>
+					<label for="2am-wx">Weather: </label><select id="2am-wx">
+						<option value="no-change">No change</option>
+						<option value="weather-random">Randomize</option>
+						<option value="sunny">Sunny</option>
+						<option value="raining">Raining</option>
+						<option value="snowing">Snowing</option>
+					</select>
+					<h4>3 AM</h4>
+					<label for="3am-game">Game: </label><select id="3am-game">
+						<option value="no-change">No change</option>
+						<option value="game-random">Randomize</option>
+						<option value="animal-crossing">Animal Crossing/Forest</option>
+						<option value="wild-world">Wild World/City Folk</option>
+						<option value="new-leaf">New Leaf</option>
+						<option value="new-horizons">New Horizons</option>
+					</select>
+					<label for="3am-wx">Weather: </label><select id="3am-wx">
+						<option value="no-change">No change</option>
+						<option value="weather-random">Randomize</option>
+						<option value="sunny">Sunny</option>
+						<option value="raining">Raining</option>
+						<option value="snowing">Snowing</option>
+					</select>
+					<h4>4 AM</h4>
+					<label for="4am-game">Game: </label><select id="4am-game">
+						<option value="no-change">No change</option>
+						<option value="game-random">Randomize</option>
+						<option value="animal-crossing">Animal Crossing/Forest</option>
+						<option value="wild-world">Wild World/City Folk</option>
+						<option value="new-leaf">New Leaf</option>
+						<option value="new-horizons">New Horizons</option>
+					</select>
+					<label for="4am-wx">Weather: </label><select id="4am-wx">
+						<option value="no-change">No change</option>
+						<option value="weather-random">Randomize</option>
+						<option value="sunny">Sunny</option>
+						<option value="raining">Raining</option>
+						<option value="snowing">Snowing</option>
+					</select>
+					<h4 >5 AM</h4>
+					<label for="5am-game" >Game: </label><select id="5am-game" >
+						<option value="no-change">No change</option>
+						<option value="game-random">Randomize</option>
+						<option value="animal-crossing">Animal Crossing/Forest</option>
+						<option value="wild-world">Wild World/City Folk</option>
+						<option value="new-leaf">New Leaf</option>
+						<option value="new-horizons">New Horizons</option>
+					</select>
+					<label for="5am-wx" >Weather: </label><select id="5am-wx">
+						<option value="no-change">No change</option>
+						<option value="weather-random">Randomize</option>
+						<option value="sunny">Sunny</option>
+						<option value="raining">Raining</option>
+						<option value="snowing">Snowing</option>
+					</select>
+					<h4>6 AM</h4>
+					<label for="6am-game">Game: </label><select id="6am-game">
+						<option value="no-change">No change</option>
+						<option value="game-random">Randomize</option>
+						<option value="animal-crossing">Animal Crossing/Forest</option>
+						<option value="wild-world">Wild World/City Folk</option>
+						<option value="new-leaf">New Leaf</option>
+						<option value="new-horizons">New Horizons</option>
+					</select>
+					<label for="6am-wx">Weather: </label><select id="6am-wx">
+						<option value="no-change">No change</option>
+						<option value="weather-random">Randomize</option>
+						<option value="sunny">Sunny</option>
+						<option value="raining">Raining</option>
+						<option value="snowing">Snowing</option>
+					</select>
+					<h4>7 AM</h4>
+					<label for="7am-game">Game: </label><select id="7am-game">
+						<option value="no-change">No change</option>
+						<option value="game-random">Randomize</option>
+						<option value="animal-crossing">Animal Crossing/Forest</option>
+						<option value="wild-world">Wild World/City Folk</option>
+						<option value="new-leaf">New Leaf</option>
+						<option value="new-horizons">New Horizons</option>
+					</select>
+					<label for="7am-wx">Weather: </label><select id="7am-wx">
+						<option value="no-change">No change</option>
+						<option value="weather-random">Randomize</option>
+						<option value="sunny">Sunny</option>
+						<option value="raining">Raining</option>
+						<option value="snowing">Snowing</option>
+					</select>
+					<h4>8 AM</h4>
+					<label for="8am-game">Game: </label><select id="8am-game">
+						<option value="no-change">No change</option>
+						<option value="game-random">Randomize</option>
+						<option value="animal-crossing">Animal Crossing/Forest</option>
+						<option value="wild-world">Wild World/City Folk</option>
+						<option value="new-leaf">New Leaf</option>
+						<option value="new-horizons">New Horizons</option>
+					</select>
+					<label for="8am-wx">Weather: </label><select id="8am-wx">
+						<option value="no-change">No change</option>
+						<option value="weather-random">Randomize</option>
+						<option value="sunny">Sunny</option>
+						<option value="raining">Raining</option>
+						<option value="snowing">Snowing</option>
+					</select>
+					<h4>9 AM</h4>
+					<label for="9am-game">Game: </label><select id="9am-game">
+						<option value="no-change">No change</option>
+						<option value="game-random">Randomize</option>
+						<option value="animal-crossing">Animal Crossing/Forest</option>
+						<option value="wild-world">Wild World/City Folk</option>
+						<option value="new-leaf">New Leaf</option>
+						<option value="new-horizons">New Horizons</option>
+					</select>
+					<label for="9am-wx">Weather: </label><select id="9am-wx">
+						<option value="no-change">No change</option>
+						<option value="weather-random">Randomize</option>
+						<option value="sunny">Sunny</option>
+						<option value="raining">Raining</option>
+						<option value="snowing">Snowing</option>
+					</select>
+					<h4>10 AM</h4>
+					<label for="10am-game">Game: </label><select id="10am-game">
+						<option value="no-change">No change</option>
+						<option value="game-random">Randomize</option>
+						<option value="animal-crossing">Animal Crossing/Forest</option>
+						<option value="wild-world">Wild World/City Folk</option>
+						<option value="new-leaf">New Leaf</option>
+						<option value="new-horizons">New Horizons</option>
+					</select>
+					<label for="10am-wx">Weather: </label><select id="10am-wx">
+						<option value="no-change">No change</option>
+						<option value="weather-random">Randomize</option>
+						<option value="sunny">Sunny</option>
+						<option value="raining">Raining</option>
+						<option value="snowing">Snowing</option>
+					</select>
+					<h4>11 AM</h4>
+					<label for="11am-game">Game: </label><select id="11am-game">
+						<option value="no-change">No change</option>
+						<option value="game-random">Randomize</option>
+						<option value="animal-crossing">Animal Crossing/Forest</option>
+						<option value="wild-world">Wild World/City Folk</option>
+						<option value="new-leaf">New Leaf</option>
+						<option value="new-horizons">New Horizons</option>
+					</select>
+					<label for="11am-wx">Weather: </label><select id="11am-wx">
+						<option value="no-change">No change</option>
+						<option value="weather-random">Randomize</option>
+						<option value="sunny">Sunny</option>
+						<option value="raining">Raining</option>
+						<option value="snowing">Snowing</option>
+					</select>
+				</div>
+				<div id="pm-hours" style="display: inline-block; background: linear-gradient(0deg, rgba(0,212,255,1), 0%, rgba(2,0,36,1), 100%);">
+					<h4>12 PM</h4>
+					<label for="12pm-game">Game: </label><select id="12pm-game">
+						<option value="no-change">No change</option>
+						<option value="game-random">Randomize</option>
+						<option value="animal-crossing">Animal Crossing/Forest</option>
+						<option value="wild-world">Wild World/City Folk</option>
+						<option value="new-leaf">New Leaf</option>
+						<option value="new-horizons">New Horizons</option>
+					</select>
+					<label for="12pm-wx">Weather: </label><select id="12pm-wx">
+						<option value="no-change">No change</option>
+						<option value="weather-random">Randomize</option>
+						<option value="sunny">Sunny</option>
+						<option value="raining">Raining</option>
+						<option value="snowing">Snowing</option>
+					</select>
+					<h4>1 PM</h4>
+					<label for="1pm-game">Game: </label><select id="1pm-game">
+						<option value="no-change">No change</option>
+						<option value="game-random">Randomize</option>
+						<option value="animal-crossing">Animal Crossing/Forest</option>
+						<option value="wild-world">Wild World/City Folk</option>
+						<option value="new-leaf">New Leaf</option>
+						<option value="new-horizons">New Horizons</option>
+					</select>
+					<label for="1pm-wx">Weather: </label><select id="1pm-wx">
+						<option value="no-change">No change</option>
+						<option value="weather-random">Randomize</option>
+						<option value="sunny">Sunny</option>
+						<option value="raining">Raining</option>
+						<option value="snowing">Snowing</option>
+					</select>
+					<h4>2 PM</h4>
+					<label for="2pm-game">Game: </label><select id="2pm-game">
+						<option value="no-change">No change</option>
+						<option value="game-random">Randomize</option>
+						<option value="animal-crossing">Animal Crossing/Forest</option>
+						<option value="wild-world">Wild World/City Folk</option>
+						<option value="new-leaf">New Leaf</option>
+						<option value="new-horizons">New Horizons</option>
+					</select>
+					<label for="2pm-wx">Weather: </label><select id="2pm-wx">
+						<option value="no-change">No change</option>
+						<option value="weather-random">Randomize</option>
+						<option value="sunny">Sunny</option>
+						<option value="raining">Raining</option>
+						<option value="snowing">Snowing</option>
+					</select>
+					<h4>3 PM</h4>
+					<label for="3pm-game">Game: </label><select id="3pm-game">
+						<option value="no-change">No change</option>
+						<option value="game-random">Randomize</option>
+						<option value="animal-crossing">Animal Crossing/Forest</option>
+						<option value="wild-world">Wild World/City Folk</option>
+						<option value="new-leaf">New Leaf</option>
+						<option value="new-horizons">New Horizons</option>
+					</select>
+					<label for="3pm-wx">Weather: </label><select id="3pm-wx">
+						<option value="no-change">No change</option>
+						<option value="weather-random">Randomize</option>
+						<option value="sunny">Sunny</option>
+						<option value="raining">Raining</option>
+						<option value="snowing">Snowing</option>
+					</select>
+					<h4>4 PM</h4>
+					<label for="4pm-game">Game: </label><select id="4pm-game">
+						<option value="no-change">No change</option>
+						<option value="game-random">Randomize</option>
+						<option value="animal-crossing">Animal Crossing/Forest</option>
+						<option value="wild-world">Wild World/City Folk</option>
+						<option value="new-leaf">New Leaf</option>
+						<option value="new-horizons">New Horizons</option>
+					</select>
+					<label for="4pm-wx">Weather: </label><select id="4pm-wx">
+						<option value="no-change">No change</option>
+						<option value="weather-random">Randomize</option>
+						<option value="sunny">Sunny</option>
+						<option value="raining">Raining</option>
+						<option value="snowing">Snowing</option>
+					</select>
+					<h4>5 PM</h4>
+					<label for="5pm-game">Game: </label><select id="5pm-game">
+						<option value="no-change">No change</option>
+						<option value="game-random">Randomize</option>
+						<option value="animal-crossing">Animal Crossing/Forest</option>
+						<option value="wild-world">Wild World/City Folk</option>
+						<option value="new-leaf">New Leaf</option>
+						<option value="new-horizons">New Horizons</option>
+					</select>
+					<label for="5pm-wx">Weather: </label><select id="5pm-wx">
+						<option value="no-change">No change</option>
+						<option value="weather-random">Randomize</option>
+						<option value="sunny">Sunny</option>
+						<option value="raining">Raining</option>
+						<option value="snowing">Snowing</option>
+					</select>
+					<h4>6 PM</h4>
+					<label for="6pm-game">Game: </label><select id="6pm-game">
+						<option value="no-change">No change</option>
+						<option value="game-random">Randomize</option>
+						<option value="animal-crossing">Animal Crossing/Forest</option>
+						<option value="wild-world">Wild World/City Folk</option>
+						<option value="new-leaf">New Leaf</option>
+						<option value="new-horizons">New Horizons</option>
+					</select>
+					<label for="6pm-wx">Weather: </label><select id="6pm-wx">
+						<option value="no-change">No change</option>
+						<option value="weather-random">Randomize</option>
+						<option value="sunny">Sunny</option>
+						<option value="raining">Raining</option>
+						<option value="snowing">Snowing</option>
+					</select>
+					<h4>7 PM</h4>
+					<label for="7pm-game">Game: </label><select id="7pm-game">
+						<option value="no-change">No change</option>
+						<option value="game-random">Randomize</option>
+						<option value="animal-crossing">Animal Crossing/Forest</option>
+						<option value="wild-world">Wild World/City Folk</option>
+						<option value="new-leaf">New Leaf</option>
+						<option value="new-horizons">New Horizons</option>
+					</select>
+					<label for="7pm-wx">Weather: </label><select id="7pm-wx">
+						<option value="no-change">No change</option>
+						<option value="weather-random">Randomize</option>
+						<option value="sunny">Sunny</option>
+						<option value="raining">Raining</option>
+						<option value="snowing">Snowing</option>
+					</select>
+					<h4>8 PM</h4>
+					<label for="8pm-game">Game: </label><select id="8pm-game">
+						<option value="no-change">No change</option>
+						<option value="game-random">Randomize</option>
+						<option value="animal-crossing">Animal Crossing/Forest</option>
+						<option value="wild-world">Wild World/City Folk</option>
+						<option value="new-leaf">New Leaf</option>
+						<option value="new-horizons">New Horizons</option>
+					</select>
+					<label for="8pm-wx">Weather: </label><select id="8pm-wx">
+						<option value="no-change">No change</option>
+						<option value="weather-random">Randomize</option>
+						<option value="sunny">Sunny</option>
+						<option value="raining">Raining</option>
+						<option value="snowing">Snowing</option>
+					</select>
+					<h4>9 PM</h4>
+					<label for="9pm-game">Game: </label><select id="9pm-game">
+						<option value="no-change">No change</option>
+						<option value="game-random">Randomize</option>
+						<option value="animal-crossing">Animal Crossing/Forest</option>
+						<option value="wild-world">Wild World/City Folk</option>
+						<option value="new-leaf">New Leaf</option>
+						<option value="new-horizons">New Horizons</option>
+					</select>
+					<label for="9pm-wx">Weather: </label><select id="9pm-wx">
+						<option value="no-change">No change</option>
+						<option value="weather-random">Randomize</option>
+						<option value="sunny">Sunny</option>
+						<option value="raining">Raining</option>
+						<option value="snowing">Snowing</option>
+					</select>
+					<h4>10 PM</h4>
+					<label for="10pm-game">Game: </label><select id="10pm-game">
+						<option value="no-change">No change</option>
+						<option value="game-random">Randomize</option>
+						<option value="animal-crossing">Animal Crossing/Forest</option>
+						<option value="wild-world">Wild World/City Folk</option>
+						<option value="new-leaf">New Leaf</option>
+						<option value="new-horizons">New Horizons</option>
+					</select>
+					<label for="10pm-wx">Weather: </label><select id="10pm-wx">
+						<option value="no-change">No change</option>
+						<option value="weather-random">Randomize</option>
+						<option value="sunny">Sunny</option>
+						<option value="raining">Raining</option>
+						<option value="snowing">Snowing</option>
+					</select>
+					<h4>11 PM</h4>
+					<label for="11pm-game">Game: </label><select id="11pm-game">
+						<option value="no-change">No change</option>
+						<option value="game-random">Randomize</option>
+						<option value="animal-crossing">Animal Crossing/Forest</option>
+						<option value="wild-world">Wild World/City Folk</option>
+						<option value="new-leaf">New Leaf</option>
+						<option value="new-horizons">New Horizons</option>
+					</select>
+					<label for="11pm-wx">Weather: </label><select id="11pm-wx">
+						<option value="no-change">No change</option>
+						<option value="weather-random">Randomize</option>
+						<option value="sunny">Sunny</option>
+						<option value="raining">Raining</option>
+						<option value="snowing">Snowing</option>
+					</select>
+				</div>
+			</div>
+			
+
 			<div id="about">
 				<header>
 					<h1>About</h1>
@@ -536,7 +1012,7 @@
 					<div class="image-container">
 						<img src="img/icons/icon/128.png" width="48" height="48">
 						<div class="image-container-text">
-							<h2>Animal Crossing Music (J variant)</h2>
+							<h2>Animal Crossing Music (T4 variant)</h2>
 							<span>Play Animal Crossing's smooth background music in real-time throughout your
 								day.</span>
 							<br />
@@ -557,6 +1033,7 @@
 
 					<br />
 					<h3>Contributors</h3>
+					<p>The T4 variant was made by <a href="https://github.com/SilverT4">SilverT4</a> for a silly reason.</p>
 					<p>The J variant was made by <a href="https://jbmagination.com">JBMagination</a> (and <a href="https://github.com/jbmagination/ac-music-extension-j/graphs/contributors">these other lovelies</a>) after over 3 years of no upstream maintenance, and a strong love for Animal Crossing. <b>It is not associated with upstream in any way.</b></p>
 					<p>Extension originally created by <a href="https://www.neogaf.com/members/andrex.20593/">Andrex</a> (1.0), <a href="https://www.neogaf.com/members/blazescorch2.142800/">blazescorch2</a> (2.0), and <a href="https://pikadude.me">PikaDude</a> (alongside <a href="https://github.com/animal-crossing-music-extension/ac-music-extension/graphs/contributors">many others</a>) (3.0 and 4.0). <i>Check out their successor to this extension, <a href="https://acmusic.app/">AC Music App</a>!</i></p>
 					<p>Idea for extension taken from <a href="https://b-lee.net/">Brian Lee</a>'s <a href="https://tane.us/ac/">Animal Crossing music website</a>.</p>
@@ -570,7 +1047,7 @@
 				</header>
 
 				<div class="content">
-					<h3>JVersion 1.1.0<span class="changelog-date"> - ???</span></h3>
+          <h3>JVersion 1.1.0<span class="changelog-date"> - ???</span></h3>
 					<ul class="changelog-list">
 						<li>Added experimental support for alternative weather providers</li>
 						<li>Moved pausing/playing and volume changes to local storage, so they no longer sync across 
@@ -579,6 +1056,11 @@
 						<li>Shortened sidebar title in options menu from "Animal Crossing Music (J variant)" to "AC 
 							Music (J variant)" to fix overlap with tabs</li>
 						<li>Minor CSS changes</li>
+					</ul>
+					<h3>T4Version 0.0.1<span class="changelog-date"> - 27th of May 2024</span></h3>
+					<ul class="changelog-list">
+						<li>Initial version</li>
+						<li>Put in barebones thing for WeatherAPI usage</li>
 					</ul>
 					<h3>JVersion 1.0.0<span class="changelog-date"> - 23rd of April 2023</span></h3>
 					<ul class="changelog-list">
