@@ -23,7 +23,7 @@
          "64": "img/icons/status/paused/64.png",
          "32": "img/icons/status/paused/32.png"
       },
-      "default_title": "Animal Crossing Music (T4 variant)"
+      "default_title": "Animal Crossing Music (S variant)"
    },
    "description": "Play Animal Crossing's smooth background music in real-time throughout your day.",
    "icons": {
@@ -32,7 +32,7 @@
       "32": "img/icons/icon/32.png"
    },
    "manifest_version": 2,
-   "name": "Animal Crossing Music (T4 variant)",
+   "name": "Animal Crossing Music (S variant)",
    "options_ui": {
       "page": "options.html",
       "open_in_tab": true
@@ -45,12 +45,11 @@
    "permissions": [
       "notifications",
       "storage",
-      "https://acmusicext.com/",
-       "https://api.weatherapi.com/"
+      "https://acmusicext.com/"
    ],
    "optional_permissions": [
       "background",
       "<all_urls>"
    ], 
-   "version": "0.0.1"
+   "version": "1.1.0"
 }

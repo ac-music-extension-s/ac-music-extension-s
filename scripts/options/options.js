@@ -37,7 +37,6 @@ function formatPercentage(number) {
 	number = parseInt(number)
 	if (number <= 0) return '0%'
 	else if (number >= 100) return '100%'
-	else if (number < 10) return `0${number}%`
 	else return `${number}%`
 }
 
@@ -63,7 +62,7 @@ window.onload = function () {
 	onClickElements.forEach(el => {
 		document.getElementById(el).onclick = saveOptions;
 	});
-	//document.getElementById('update-location').onclick = validateWeather;
+	document.getElementById('update-location').onclick = validateWeather;
 	document.getElementById('tab-audio-reduce-value').onchange = saveOptions;
 
 	if (!window.location.href.includes('options2.html')) {
@@ -98,7 +97,7 @@ window.onload = function () {
 
 	document.getElementById('kk-songs-selection-enable').onchange = saveOptions;
 	document.getElementById('kk-songs-selection').onchange = saveOptions;
-	//document.getElementById('weather-provider').onchange = displayThirdBox;
+	document.getElementById('weather-provider').onchange = displayThirdBox;
 
 	const kkSongsSelect = document.getElementById('kk-songs-selection');
 	KKSongList.forEach((song) => {
@@ -110,9 +109,22 @@ window.onload = function () {
 
 	window.get_settings();
 	window.set_onclicks();
+  
+	let ctrlCmdText;
+	let macCheck;
+	// navigator.platform is deprecated; rely on navigator.userAgentData first and foremost...
+	// ...but navigator.userAgentData is only supported in Chrome. yay, standards!
+	if (navigator.userAgentData) {
+		(async () => {
+			macCheck = (await navigator.userAgentData.getHighEntropyValues(['platform'])).platform == 'macOS'
+		})()
+	} else macCheck = navigator.platform == 'MacIntel'
+	if (macCheck) ctrlCmdText = 'Command/Cmd'
+	else ctrlCmdText = 'Control/Ctrl/Steuerung/Strg'
+	document.getElementById('ctrl-cmd').textContent = ctrlCmdText;
 }
 
-/*function displayThirdBox() {
+function displayThirdBox() {
 	if (document.getElementById('weather-provider').value == 'owm-proxy') {
 		Array.from(document.getElementsByClassName('provider-url')).forEach(element => { element.style = 'display:none;' })
 		Array.from(document.getElementsByClassName('api-key')).forEach(element => { element.style = 'display:none;' })
@@ -126,7 +138,7 @@ window.onload = function () {
 		Array.from(document.getElementsByClassName('provider-url')).forEach(element => { element.style = 'display:none;' })
 		Array.from(document.getElementsByClassName('api-key')).forEach(element => { element.style = '' })
 	}
-}*/
+}
 
 function saveOptions() {
 	let volume = document.getElementById('volume').value;
@@ -137,8 +149,8 @@ function saveOptions() {
 	let enableTownTune = document.getElementById('enable-town-tune').checked;
 	let absoluteTownTune = document.getElementById('absolute-town-tune').checked;
 	let townTuneVolume   = document.getElementById('townTuneVolume').value;
-	//let zipCode = document.getElementById('zip-code').value;
-	//let countryCode = document.getElementById('country-code').value;
+	let zipCode = document.getElementById('zip-code').value;
+	let countryCode = document.getElementById('country-code').value;
 	let enableBadgeText = document.getElementById('enable-badge').checked;
 	let enableBackground = document.getElementById('enable-background').checked;
 	let tabAudioReduceValue = document.getElementById('tab-audio-reduce-value').value;
@@ -192,7 +204,6 @@ function saveOptions() {
 	document.getElementById('kk-songs-selection').disabled = !kkSelectedSongsEnable;
 
 	chrome.storage.sync.set({
-		volume,
 		music,
 		weather,
 		enableNotifications,
@@ -202,8 +213,8 @@ function saveOptions() {
 		enableTownTune,
 		absoluteTownTune,
 		townTuneVolume,
-		/*zipCode,
-		countryCode,*/
+		zipCode,
+		countryCode,
 		enableBadgeText,
 		enableBackground,
 		tabAudio,
@@ -211,6 +222,8 @@ function saveOptions() {
 		kkSelectedSongsEnable,
 		kkSelectedSongs
 	});
+	window.localStorage.setItem("volume", volume)
+	window.localStorage.setItem("townTuneVolume", townTuneVolume)
 }
 
 function restoreOptions() {
@@ -236,6 +249,14 @@ function restoreOptions() {
 		kkSelectedSongsEnable: false,
 		kkSelectedSongs: []
 	}, items => {
+		if (window.localStorage.getItem('volume') == null) {
+			window.localStorage.setItem('volume', `${items.volume}`);
+		}
+		if (window.localStorage.getItem('townTuneVolume') == null) {
+			window.localStorage.setItem('townTuneVolume', `${items.townTuneVolume}`);
+		}
+		items.volume = (window.localStorage.getItem("volume") >= 0 && window.localStorage.getItem("volume") !== null) ? window.localStorage.getItem("volume") : 0.5;
+		items.townTuneVolume = (window.localStorage.getItem("townTuneVolume") >= 0 && window.localStorage.getItem("volume") !== null) ? window.localStorage.getItem("townTuneVolume") : 0.75;
 		document.getElementById('volume').value = items.volume;
 		document.getElementById('volumeText').innerText = `${formatPercentage(items.volume*100)}`;
 		document.getElementById(items.music).checked = true;
