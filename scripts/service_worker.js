@@ -2,7 +2,7 @@ import { printDebug, setupOffscreenDocument } from './background/Utility.js'; //
 import { StateManager } from './background/StateManager.js'; // Manages the current state of the extension
 import { BadgeManager } from './background/BadgeManager.js';
 
-('use strict');
+'use strict';
 
 // Events that need both badge updates AND audio playback
 const badgeAndAudioEvents = [

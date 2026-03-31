@@ -2,7 +2,7 @@
 
 import { printDebug } from './Utility.js';
 
-('use strict');
+'use strict';
 
 export function TabAudioHandler() {
 	let tabUpdatedHandler;

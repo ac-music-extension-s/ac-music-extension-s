@@ -13,7 +13,7 @@ import {
 import { KKSongList } from './KKSongs.js';
 import { loopTimes } from './LoopTimes.js';
 
-('use strict');
+'use strict';
 export function AudioManager(addEventListener, isTownTune, notifyListenersArg) {
 	const notify = notifyListenersArg;
 
